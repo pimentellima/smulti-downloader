@@ -1,0 +1,11 @@
+services:
+    postgres:
+        image: 'postgres:15.2-alpine'
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: my-local-db
+        ports:
+            - '5328:5432'
+volumes:
+    postgres_data:
