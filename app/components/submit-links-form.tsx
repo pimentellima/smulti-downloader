@@ -1,5 +1,5 @@
 'use client'
-import { useLocale, useProcessLinks } from '@/lib/hooks'
+import { useLocale, useCreateJobs } from '@/hooks/jobs'
 import { Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -28,35 +28,35 @@ const formDictionary = {
         },
     },
 }
-
-export default function SubmitLinksForm() {
+interface SubmitLinksFormProps {
+    setPageError: (error: string | undefined) => void
+}
+export default function SubmitLinksForm({
+    setPageError,
+}: SubmitLinksFormProps) {
     const locale = useLocale()
     const [inputValue, setInputValue] = useState('')
     const links = useMemo(
         () => (inputValue ? inputValue.split(',') : []),
         [inputValue]
     )
-    const processLinks = useProcessLinks()
+    const createJobs = useCreateJobs()
     const [params, setParams] = useSearchParams()
     const requestId = params.get('requestId')
 
-    const setError = (error: string) => {
-        setParams((prev) => ({ ...prev, error }))
-    }
-
     const setRequestId = (id: string) => {
-        setParams((prev) => ({ ...prev, error: undefined, requestId: id }))
+        setParams({ requestId: id })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         if (links.length === 0) {
-            setError?.(formDictionary[locale].errors.emptyLinks)
+            setPageError?.(formDictionary[locale].errors.emptyLinks)
             return
         }
 
-        const result = await processLinks.mutateAsync(
+        const result = await createJobs.mutateAsync(
             {
                 urls: links,
                 requestId,
@@ -64,6 +64,7 @@ export default function SubmitLinksForm() {
             {
                 onSuccess: () => setInputValue(''),
                 onError: (err) => {
+                    setPageError?.(formDictionary[locale].errors.invalidLinks)
                     console.error('Error processing links:', err)
                 },
             }
@@ -82,17 +83,17 @@ export default function SubmitLinksForm() {
                         placeholder={formDictionary[locale].placeholder}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        disabled={processLinks.isPending}
+                        disabled={createJobs.isPending}
                         className="h-9 rounded-r-md sm:rounded-r-none focus-visible-ring-2 sm:focus-visible:ring-0 bg-background
                         text-sm"
                     />
                     <Button
                         type="submit"
-                        disabled={processLinks.isPending}
+                        disabled={createJobs.isPending}
                         variant="secondary"
                         className="sm:rounded-l-none rounded-l-md"
                     >
-                        {processLinks.isPending ? (
+                        {createJobs.isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 {formDictionary[locale].processing}

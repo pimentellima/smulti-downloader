@@ -11,8 +11,8 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { BASE_URL } from '@/lib/base-url'
-import type { Job } from '@/lib/db'
-import { useLocale } from '@/lib/hooks'
+import type { Job } from '@/lib/api/jobs'
+import { useLocale } from '@/hooks/jobs'
 import {
     flexRender,
     getCoreRowModel,

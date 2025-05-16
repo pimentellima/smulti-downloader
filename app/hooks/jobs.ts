@@ -1,7 +1,7 @@
-'use client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Job } from '@/lib/db'
-import type { Locale } from '@/dictionaries'
+import type { Job } from '@/lib/api/jobs'
+import type { Locale } from '@/lib/dictionaries'
+import type { CreateJobsSchema, RetryJobsSchema } from '@/lib/schemas/job'
 
 export function useJobs(requestId: string | null) {
     return useQuery<Job[]>({
@@ -15,7 +15,6 @@ export function useJobs(requestId: string | null) {
         },
         enabled: !!requestId,
         refetchInterval: (query) => {
-            // Stop polling if all jobs are complete
             if (!query) return false
             const allComplete = query.state.data?.every(
                 (job: Job) => job.status === 'ready' || job.status === 'error'
@@ -26,31 +25,18 @@ export function useJobs(requestId: string | null) {
     })
 }
 
-export function useProcessLinks() {
+export function useCreateJobs() {
     const queryClient = useQueryClient()
 
-    return useMutation<
-        { requestId: string },
-        unknown,
-        {
-            urls: string[]
-            requestId?: string | null
-        }
-    >({
-        mutationFn: async (data: {
-            urls: string[]
-            requestId?: string | null
-        }) => {
-            const response = await fetch(
-                `/api/process/${data.requestId || ''}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ urls: data.urls }),
-                }
-            )
+    return useMutation<{ requestId: string }, unknown, CreateJobsSchema>({
+        mutationFn: async (data: CreateJobsSchema) => {
+            const response = await fetch(`/api/jobs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -67,35 +53,17 @@ export function useProcessLinks() {
     })
 }
 
-export function useRetryJob() {
+export function useRetryJobs() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async (jobId: string) => {
-            const response = await fetch(`/api/retry/${jobId}`, {
+        mutationFn: async (data: RetryJobsSchema) => {
+            const response = await fetch(`/api/retry`, {
                 method: 'POST',
-            })
-
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to retry job')
-            }
-
-            return await response.json()
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['jobs'] })
-        },
-    })
-}
-
-export function useRetryAllJobs() {
-    const queryClient = useQueryClient()
-
-    return useMutation({
-        mutationFn: async (requestId: string) => {
-            const response = await fetch(`/api/retry/batch/${requestId}`, {
-                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
             })
 
             if (!response.ok) {
@@ -118,7 +86,7 @@ export function useCancelJob() {
 
     return useMutation({
         mutationFn: async (jobId: string) => {
-            const response = await fetch(`/api/jobs/${jobId}/status/cancel`, {
+            const response = await fetch(`/api/jobs/${jobId}/cancel`, {
                 method: 'PUT',
             })
 

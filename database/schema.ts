@@ -1,7 +1,44 @@
-import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+import {
+    pgEnum,
+    pgTable,
+    text,
+    timestamp,
+    uuid
+} from 'drizzle-orm/pg-core'
 
-export const guestBook = pgTable("guestBook", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  email: varchar({ length: 255 }).notNull().unique(),
-});
+export const jobStatusEnum = pgEnum('job_status', [
+    'queued',
+    'processing',
+    'error',
+    'ready',
+    'cancelled',
+])
+
+export const jobs = pgTable('jobs', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    requestId: uuid('request_id')
+        .references(() => requests.id, { onDelete: 'cascade' })
+        .notNull(),
+    url: text('url').notNull(),
+    status: jobStatusEnum('status').notNull().default('queued'),
+    title: text('title'),
+})
+
+export const requests = pgTable('requests', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const users = pgTable('users', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name'),
+    email: text('email').unique(),
+    emailVerified: timestamp('email_verified', { mode: 'date' }),
+    password: text('password').notNull(),
+    image: text('image'),
+    stripeCustomerId: text('stripe_customer_id').unique(),
+    stripeSubscriptionId: text('stripe_subscription_id').unique(),
+    createdAt: timestamp('created_at').defaultNow(),
+})

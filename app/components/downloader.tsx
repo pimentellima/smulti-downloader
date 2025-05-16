@@ -1,13 +1,7 @@
 import { LinksTable } from '@/components/links-table'
 import { Button } from '@/components/ui/button'
 import { BASE_URL } from '@/lib/base-url'
-import {
-    useCancelJob,
-    useJobs,
-    useLocale,
-    useRetryAllJobs,
-    useRetryJob,
-} from '@/lib/hooks'
+import { useCancelJob, useJobs, useLocale, useRetryJobs } from '@/hooks/jobs'
 import { DownloadIcon, Loader2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -25,35 +19,34 @@ const downloaderDictionary = {
     },
 }
 
-export default function Downloader() {
+interface DownloaderProps {
+    setPageError: (error: string | undefined) => void
+}
+
+export default function Downloader({ setPageError }: DownloaderProps) {
     const locale = useLocale()
     const [searchParams, setSearchParams] = useSearchParams()
     const requestId = searchParams.get('requestId')
     const cancelJob = useCancelJob()
-    const retryJob = useRetryJob()
-    const retryAllJobs = useRetryAllJobs()
+    const retryJobs = useRetryJobs()
     const [retryingJobs, setRetryingJobs] = useState<Record<string, boolean>>(
         {}
     )
-
-    const setError = (error: string) => {
-        setSearchParams((prev) => ({ ...prev, error }))
-    }
 
     const handleRemoveJob = async (jobId: string) => {
         try {
             await cancelJob.mutateAsync(jobId)
         } catch (err) {
-            setError('Failed to remove job')
+            setPageError('Failed to remove job')
         }
     }
 
     const handleRetry = async (jobId: string) => {
         try {
             setRetryingJobs((prev) => ({ ...prev, [jobId]: true }))
-            await retryJob.mutateAsync(jobId)
+            await retryJobs.mutateAsync({ ids: [jobId] })
         } catch (err) {
-            setError('Failed to retry job')
+            setPageError('Failed to retry job')
         } finally {
             setRetryingJobs((prev) => ({ ...prev, [jobId]: false }))
         }
@@ -62,9 +55,9 @@ export default function Downloader() {
         if (!requestId) return
 
         try {
-            await retryAllJobs.mutateAsync(requestId)
+            await retryJobs.mutateAsync({ requestId })
         } catch (err) {
-            setError(
+            setPageError(
                 err instanceof Error ? err.message : 'Failed to retry jobs'
             )
         }
@@ -100,9 +93,9 @@ export default function Downloader() {
                             variant="outline"
                             size="lg"
                             onClick={handleRetryAll}
-                            disabled={retryAllJobs.isPending}
+                            disabled={retryJobs.isPending}
                         >
-                            {retryAllJobs.isPending ? (
+                            {retryJobs.isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                                     {downloaderDictionary[locale].retrying}

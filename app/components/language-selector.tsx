@@ -7,8 +7,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Locale } from '@/dictionaries'
-import { useLocale } from '@/lib/hooks'
+import type { Locale } from '@/lib/dictionaries'
+import { useLocale } from '@/hooks/jobs'
 import { cn } from '@/lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState, useTransition } from 'react'

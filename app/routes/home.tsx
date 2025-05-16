@@ -1,6 +1,6 @@
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router-dom'
-import { loadDictionary, type Locale } from '@/dictionaries'
-import { getJobsByRequestId } from '@/lib/db'
+import { loadDictionary, type Locale } from '@/lib/dictionaries'
+import { getJobsByRequestId } from '@/lib/api/jobs'
 import {
     dehydrate,
     HydrationBoundary,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/accordion'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Clock, Download, Music, Shield } from 'lucide-react'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import type { Route } from './+types/home'
 
 export function meta({}: Route.MetaArgs) {
@@ -41,7 +41,6 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url)
     const requestId = url.searchParams.get('requestId') || undefined
-    const error = url.searchParams.get('error') || undefined
     const locale = (url.searchParams.get('locale') as Locale) || 'en-US'
 
     const dictionary = await loadDictionary(locale)
@@ -58,15 +57,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return {
         dictionary,
         requestId,
-        error,
         locale,
         dehydratedState: dehydrate(queryClient),
     }
 }
 
 export default function Page() {
-    const { dictionary, requestId, error, locale, dehydratedState } =
+    const { dictionary, requestId, locale, dehydratedState } =
         useLoaderData() as Awaited<ReturnType<typeof loader>>
+
+    const [pageError, setPageError] = useState<string | undefined>()
 
     return (
         <main className="bg-card min-h-screen">
@@ -85,20 +85,20 @@ export default function Page() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SubmitLinksForm />
+                        <SubmitLinksForm setPageError={setPageError} />
                         <Suspense fallback={<LoadingSkeleton />}>
                             <HydrationBoundary state={dehydratedState}>
-                                <Downloader />
+                                <Downloader setPageError={setPageError} />
                             </HydrationBoundary>
                         </Suspense>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                        {error && (
+                        {pageError && (
                             <Alert variant="destructive" className="mt-4">
                                 <AlertTitle>
                                     {dictionary.error.title}
                                 </AlertTitle>
-                                <AlertDescription>{error}</AlertDescription>
+                                <AlertDescription>{pageError}</AlertDescription>
                             </Alert>
                         )}
                     </CardFooter>
