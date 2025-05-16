@@ -1,6 +1,6 @@
 import { LinksTable } from '@/components/links-table'
 import { Button } from '@/components/ui/button'
-import { BASE_URL } from '@/lib/base-url'
+import { BASE_URL } from '@/lib/constants'
 import { useCancelJob, useJobs, useRetryJobs } from '@/hooks/jobs'
 import { DownloadIcon, Loader2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'

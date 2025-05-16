@@ -10,7 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { BASE_URL } from '@/lib/base-url'
+import { BASE_URL } from '@/lib/constants'
 import type { Job } from '@/lib/api/jobs'
 import {
     flexRender,

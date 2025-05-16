@@ -9,7 +9,7 @@ const client = new SQSClient({
     },
 })
 
-const queueUrl = process.env.SQS_QUEUE_URL
+const queueUrl = process.env.SQS_URL!
 
 export async function sendMessageToSqs(messageBody: string) {
     const command = new SendMessageCommand({
