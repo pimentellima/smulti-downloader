@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/table'
 import { BASE_URL } from '@/lib/base-url'
 import type { Job } from '@/lib/api/jobs'
-import { useLocale } from '@/hooks/jobs'
 import {
     flexRender,
     getCoreRowModel,
@@ -28,6 +27,7 @@ import {
     RefreshCw,
     XIcon,
 } from 'lucide-react'
+import { useLocale } from '@/hooks/locale'
 
 interface LinksTableProps {
     data: Job[]

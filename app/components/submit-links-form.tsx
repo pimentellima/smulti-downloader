@@ -1,10 +1,11 @@
 'use client'
-import { useLocale, useCreateJobs } from '@/hooks/jobs'
+import { useCreateJobs } from '@/hooks/jobs'
 import { Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import { useLocale } from '@/hooks/locale'
 
 const formDictionary = {
     'en-US': {

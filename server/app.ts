@@ -6,8 +6,9 @@ import 'react-router'
 import { DatabaseContext } from '~/database/context'
 import * as schema from '~/database/schema'
 import jobsRoute from '@/api/routes/jobs/route'
-import errorMiddleware from '@/api/error-middleware'
+import errorMiddleware from '@/api/middleware/error-middleware'
 import bodyParser from 'body-parser'
+import languageMiddleware from '@/api/middleware/language-middleware'
 
 declare module 'react-router' {
     interface AppLoadContext {
@@ -30,6 +31,7 @@ app.get('/api', (req, res) => {
 })
 app.use('/api/jobs', jobsRoute)
 
+app.use(languageMiddleware)
 app.use(
     createRequestHandler({
         build: () => import('virtual:react-router/server-build'),

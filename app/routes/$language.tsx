@@ -1,5 +1,9 @@
-import { useLoaderData, type LoaderFunctionArgs } from 'react-router-dom'
-import { loadDictionary, type Locale } from '@/lib/dictionaries'
+import {
+    useLoaderData,
+    useParams,
+    type LoaderFunctionArgs,
+} from 'react-router-dom'
+import { loadDictionary } from '@/lib/dictionaries'
 import { getJobsByRequestId } from '@/lib/api/jobs'
 import {
     dehydrate,
@@ -29,7 +33,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Clock, Download, Music, Shield } from 'lucide-react'
 import { Suspense, useState } from 'react'
-import type { Route } from './+types/home'
+import type { Route } from './+types/_index'
+import type { Locale } from '@/lib/locale'
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -38,12 +43,11 @@ export function meta({}: Route.MetaArgs) {
     ]
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
     const url = new URL(request.url)
     const requestId = url.searchParams.get('requestId') || undefined
-    const locale = (url.searchParams.get('locale') as Locale) || 'en-US'
 
-    const dictionary = await loadDictionary(locale)
+    const dictionary = await loadDictionary(params.locale as Locale)
 
     const queryClient = new QueryClient()
     if (requestId) {
@@ -57,13 +61,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return {
         dictionary,
         requestId,
-        locale,
         dehydratedState: dehydrate(queryClient),
     }
 }
 
-export default function Page() {
-    const { dictionary, requestId, locale, dehydratedState } =
+export default function HomePage() {
+    const locale = useParams().locale as Locale
+    const { dictionary, requestId, dehydratedState } =
         useLoaderData() as Awaited<ReturnType<typeof loader>>
 
     const [pageError, setPageError] = useState<string | undefined>()

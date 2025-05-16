@@ -1,10 +1,11 @@
 import { LinksTable } from '@/components/links-table'
 import { Button } from '@/components/ui/button'
 import { BASE_URL } from '@/lib/base-url'
-import { useCancelJob, useJobs, useLocale, useRetryJobs } from '@/hooks/jobs'
+import { useCancelJob, useJobs, useRetryJobs } from '@/hooks/jobs'
 import { DownloadIcon, Loader2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { useLocale } from '@/hooks/locale'
 
 const downloaderDictionary = {
     'en-US': {

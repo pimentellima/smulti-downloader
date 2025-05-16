@@ -102,8 +102,3 @@ export function useCancelJob() {
         },
     })
 }
-
-export function useLocale() {
-    const locale = 'pt-BR'
-    return locale as Locale
-}

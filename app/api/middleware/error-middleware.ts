@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
-import { handleApiError } from './errors'
+import { handleApiError } from '../errors'
 
-function errorMiddleware(
+export default function errorMiddleware(
     err: any,
     request: Request,
     response: Response,
@@ -10,5 +10,3 @@ function errorMiddleware(
     const { error, status } = handleApiError(err)
     response.status(status).send({ status, error })
 }
-
-export default errorMiddleware
