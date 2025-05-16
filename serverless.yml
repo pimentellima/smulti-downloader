@@ -1,0 +1,31 @@
+service: sqs-worker
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+functions:
+  processQueue:
+    handler: app/worker/handler.main
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - JobsQueue
+              - Arn
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    target: node18
+    sourcemap: true
+    keepNames: true
+    external: []
+    tsconfig: './tsconfig.json'
+
+resources:
+  Resources:
+    JobsQueue:
+      Type: AWS::SQS::Queue

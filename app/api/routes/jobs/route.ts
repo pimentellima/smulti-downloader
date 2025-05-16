@@ -9,6 +9,7 @@ import {
     updateJob,
 } from '@/lib/api/jobs'
 import { createJobsSchema, retryJobsSchema } from '@/lib/schemas/job'
+import { sendMessageToSqs } from '@/lib/sqs'
 import { Router } from 'express'
 import { z } from 'zod'
 
@@ -63,6 +64,8 @@ jobsRoute.post('/', async (req, res, next) => {
             )
         }
 
+        const sqsRes = await sendMessageToSqs(reqId!)
+        console.log('Resposta do SQS:', sqsRes)
         res.status(200).json({ requestId: reqId })
     } catch (err) {
         next(err)
