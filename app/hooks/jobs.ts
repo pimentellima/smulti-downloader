@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Job } from '@/lib/api/jobs'
-import type { Locale } from '@/lib/dictionaries'
 import type { CreateJobsSchema, RetryJobsSchema } from '@/lib/schemas/job'
 
 export function useJobs(requestId: string | null) {

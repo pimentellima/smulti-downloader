@@ -8,6 +8,8 @@ export default function languageMiddleware(
 ) {
     const pathname = req.path
     if (pathname.includes('/api')) return next()
+    // Pula o middleware se a URL já contém uma extensão de arquivo
+    if (/\.[^\/]+$/.test(pathname)) return next()
     const queryString = req.url.includes('?')
         ? req.url.substring(req.url.indexOf('?'))
         : ''
