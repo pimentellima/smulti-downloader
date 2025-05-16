@@ -16,21 +16,19 @@ declare module 'react-router' {
     }
 }
 
+
+if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required')
+const client = postgres(process.env.DATABASE_URL)
+const db = drizzle(client, { schema })
+
 export const app = express()
 
 app.use(bodyParser.json())
-
-if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required')
-
-const client = postgres(process.env.DATABASE_URL)
-const db = drizzle(client, { schema })
 app.use((_, __, next) => DatabaseContext.run(db, next))
-
 app.get('/api', (req, res) => {
     res.json({ message: 'Hello from API' })
 })
 app.use('/api/jobs', jobsRoute)
-
 app.use(languageMiddleware)
 app.use(
     createRequestHandler({

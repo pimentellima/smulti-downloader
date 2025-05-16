@@ -42,11 +42,8 @@ export async function getJobsByRequestId(requestId: string, opts: any) {
 export async function getRequestById(requestId: string) {
     const db = database()
 
-    const request = await db.query.jobs.findFirst({
-        where: and(
-            eq(schema.jobs.requestId, requestId),
-            not(eq(schema.jobs.status, 'cancelled'))
-        ),
+    const request = await db.query.requests.findFirst({
+        where: and(eq(schema.requests.id, requestId)),
     })
 
     if (!request) {

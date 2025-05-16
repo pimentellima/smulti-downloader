@@ -7,6 +7,7 @@ export default function languageMiddleware(
     next: NextFunction
 ) {
     const pathname = req.path
+    if (pathname.includes('/api')) return next()
     const queryString = req.url.includes('?')
         ? req.url.substring(req.url.indexOf('?'))
         : ''
