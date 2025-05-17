@@ -10,9 +10,9 @@ services:
     localstack:
         image: localstack/localstack:latest
         ports:
-            - "4566:4566" # porta única para todos os serviços
+            - "4566:4566"
         environment:
-            - SERVICES=sqs,lambda
+            - SERVICES=sqs,lambda,cloudformation,ssm,logs,iam
             - DEBUG=1
             - DOCKER_HOST=unix:///var/run/docker.sock
         volumes:

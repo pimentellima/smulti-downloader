@@ -1,5 +1,10 @@
 import { ApiError } from '@/api/errors'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import {
+    GetQueueUrlCommand,
+    SQSClient,
+    SendMessageCommand,
+} from '@aws-sdk/client-sqs'
+import { sqsQueueName } from './constants'
 
 const client = new SQSClient({
     region: process.env.AWS_REGION!,
@@ -7,19 +12,27 @@ const client = new SQSClient({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
+    endpoint:
+        process.env.NODE_ENV === 'development'
+            ? 'http://localhost:4566'
+            : undefined,
 })
 
-const queueUrl = process.env.SQS_URL!
-
-export async function sendMessageToSqs(messageBody: string) {
-    const command = new SendMessageCommand({
-        QueueUrl: queueUrl,
-        MessageBody: messageBody,
-    })
-
+export async function addJobToSqsQueue(jobId: string) {
     try {
+        const { QueueUrl } = await client.send(
+            new GetQueueUrlCommand({
+                QueueName: sqsQueueName,
+            })
+        )
+
+        const command = new SendMessageCommand({
+            QueueUrl,
+            MessageBody: jobId,
+        })
         return await client.send(command)
     } catch (error) {
+        console.log(error)
         throw new ApiError({
             code: 'internal_server_error',
             message: 'Error sending message to SQS',

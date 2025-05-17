@@ -1,9 +1,13 @@
 import { z } from 'zod'
+import { jobStatusEnum } from '~/database/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
     urls: z.array(z.string().url()),
 })
+
+export const statusSchema = z.enum(jobStatusEnum.enumValues)
+export type JobStatus = z.infer<typeof statusSchema>
 
 export const retryJobsSchema = z
     .object({

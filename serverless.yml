@@ -1,9 +1,13 @@
 service: sqs-worker
+plugins:
+    - serverless-localstack
 
 provider:
     name: aws
     runtime: nodejs18.x
     region: us-east-1
+    environment:
+        DATABASE_URL: postgres://postgres:postgres@postgres:5432/my-local-db
 
 functions:
     processQueue:
@@ -26,13 +30,15 @@ custom:
     localstack:
         stages:
             - local
-        host: http://localhost 
+        host: http://localhost
         edgePort: 4566
-        autostart: false 
+        autostart: false
         lambda:
-            mountCode: true 
+            mountCode: true
 
 resources:
     Resources:
         JobsQueue:
             Type: AWS::SQS::Queue
+            Properties:
+                QueueName: JobsQueue

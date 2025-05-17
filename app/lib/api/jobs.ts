@@ -7,8 +7,9 @@ import {
     type InferInsertModel,
     type InferSelectModel,
 } from 'drizzle-orm'
-import { database } from '~/database/context'
-import * as schema from '~/database/schema'
+import { database, type DatabaseType } from '../../../database/context'
+import * as schema from '../../../database/schema'
+import type { JobStatus } from '../schemas/job'
 
 export type Job = InferSelectModel<typeof schema.jobs>
 
@@ -56,9 +57,13 @@ export async function getRequestById(requestId: string) {
     return request
 }
 
-export async function createRequest() {
+export async function findOrCreateRequestById(id?: string) {
     const db = database()
-    const [request] = await db.insert(schema.requests).values({}).returning()
+    const [request] = await db
+        .insert(schema.requests)
+        .values({ id })
+        .onConflictDoUpdate({ set: { id }, target: schema.requests.id })
+        .returning()
 
     return request
 }
@@ -113,6 +118,29 @@ export async function updateJob(id: string, data: Partial<Omit<Job, 'id'>>) {
     const job = await db
         .update(schema.jobs)
         .set(data)
+        .where(eq(schema.jobs.id, id))
+        .returning()
+
+    if (!job) {
+        throw new ApiError({
+            code: 'not_found',
+            message: `Job not found`,
+        })
+    }
+
+    return job
+}
+
+export const updateJobStatus = async (
+    id: string,
+    status: JobStatus,
+    db?: DatabaseType
+) => {
+    db = db || database()
+
+    const job = await db
+        .update(schema.jobs)
+        .set({ status })
         .where(eq(schema.jobs.id, id))
         .returning()
 

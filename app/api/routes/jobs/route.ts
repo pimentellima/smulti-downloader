@@ -1,7 +1,7 @@
 import { ApiError } from '@/api/errors'
 import {
     createJobs,
-    createRequest,
+    findOrCreateRequestById,
     getJobsByRequestId,
     getRequestById,
     retryJobsByIds,
@@ -9,7 +9,7 @@ import {
     updateJob,
 } from '@/lib/api/jobs'
 import { createJobsSchema, retryJobsSchema } from '@/lib/schemas/job'
-import { sendMessageToSqs } from '@/lib/sqs'
+import { addJobToSqsQueue } from '@/lib/sqs'
 import { Router } from 'express'
 import { z } from 'zod'
 
@@ -41,33 +41,31 @@ jobsRoute.get('/', async (req, res, next) => {
 
 jobsRoute.post('/', async (req, res, next) => {
     try {
-        const { urls, requestId } = createJobsSchema.parse(req.body)
-        let reqId = requestId
-        if (requestId) {
-            await getRequestById(requestId)
-            await createJobs(
-                urls.map((url) => ({
-                    url,
-                    title: 'Untlited',
-                    requestId,
-                }))
-            )
-        } else {
-            const request = await createRequest()
-            reqId = request.id
-            await createJobs(
-                urls.map((url) => ({
-                    url,
-                    title: 'Untlited',
-                    requestId: request.id,
-                }))
-            )
+        const postJobsData = createJobsSchema.parse(req.body)
+        const { id: requestId } = await findOrCreateRequestById(
+            postJobsData.requestId ?? undefined
+        )
+        const urls = postJobsData.urls
+        const jobs = await createJobs(
+            urls.map((url) => ({
+                url,
+                title: 'Untlited',
+                requestId,
+            }))
+        )
+
+        for (const job of jobs) {
+            try {
+                await addJobToSqsQueue(job.id)
+            } catch (err) {
+                await updateJob(job.id, { status: 'error' })
+                throw err
+            }
         }
 
-        const sqsRes = await sendMessageToSqs(reqId!)
-        console.log('Resposta do SQS:', sqsRes)
-        res.status(200).json({ requestId: reqId })
+        res.status(200).json({ requestId })
     } catch (err) {
+        console.log(err)
         next(err)
     }
 })
