@@ -20,3 +20,19 @@ export const retryJobsSchema = z
 
 export type RetryJobsSchema = z.infer<typeof retryJobsSchema>
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>
+
+export type Format = {
+    format_id: string
+    ext: string
+    resolution?: string 
+    filesize: number
+    tbr: number
+    url: string
+}
+
+export type JsonData = {
+    title: string
+    formats_mp4: (Format & { resolution: string })[]
+    formats_mp3: Omit<Format, 'resolution'>[]
+    thumbnail_url: string
+}

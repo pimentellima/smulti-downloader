@@ -1,7 +1,7 @@
 import { ApiError } from '@/api/errors'
 import {
     createJobs,
-    findOrCreateRequestById,
+    createRequest,
     getJobsByRequestId,
     getRequestById,
     retryJobsByIds,
@@ -42,9 +42,7 @@ jobsRoute.get('/', async (req, res, next) => {
 jobsRoute.post('/', async (req, res, next) => {
     try {
         const postJobsData = createJobsSchema.parse(req.body)
-        const { id: requestId } = await findOrCreateRequestById(
-            postJobsData.requestId ?? undefined
-        )
+        const requestId = postJobsData.requestId || (await createRequest()).id
         const urls = postJobsData.urls
         const jobs = await createJobs(
             urls.map((url) => ({
@@ -56,13 +54,14 @@ jobsRoute.post('/', async (req, res, next) => {
 
         for (const job of jobs) {
             try {
-                await addJobToSqsQueue(job.id)
+                const response = await addJobToSqsQueue(job.id)
+                console.log(response)
             } catch (err) {
                 await updateJob(job.id, { status: 'error' })
                 throw err
             }
         }
-
+        console.log({ requestId })
         res.status(200).json({ requestId })
     } catch (err) {
         console.log(err)

@@ -13,8 +13,8 @@ import type { JobStatus } from '../schemas/job'
 
 export type Job = InferSelectModel<typeof schema.jobs>
 
-export async function getJob(id: string) {
-    const db = database()
+export async function getJob(id: string, db?: DatabaseType) {
+    db = db || database()
     const job = await db.query.jobs.findFirst({
         where: eq(schema.jobs.id, id),
     })
@@ -57,13 +57,9 @@ export async function getRequestById(requestId: string) {
     return request
 }
 
-export async function findOrCreateRequestById(id?: string) {
+export async function createRequest() {
     const db = database()
-    const [request] = await db
-        .insert(schema.requests)
-        .values({ id })
-        .onConflictDoUpdate({ set: { id }, target: schema.requests.id })
-        .returning()
+    const [request] = await db.insert(schema.requests).values({}).returning()
 
     return request
 }

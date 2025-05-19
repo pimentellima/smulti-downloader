@@ -1,44 +1,44 @@
 service: sqs-worker
 plugins:
-    - serverless-localstack
+  - serverless-localstack
 
 provider:
-    name: aws
-    runtime: nodejs18.x
-    region: us-east-1
-    environment:
-        DATABASE_URL: postgres://postgres:postgres@postgres:5432/my-local-db
+  name: aws
+  region: us-east-1
+  timeout: 60
+  ecr:
+    images:
+      sqs-worker-image:
+        path: .
+        file: Dockerfile.lambda
+
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
 
 functions:
-    processQueue:
-        handler: app/worker/handler.main
-        events:
-            - sqs:
-                  arn:
-                      Fn::GetAtt:
-                          - JobsQueue
-                          - Arn
+  processQueuePython:
+    image:
+      name: sqs-worker-image
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - JobsQueue
+              - Arn
+
 custom:
-    esbuild:
-        bundle: true
-        minify: false
-        target: node18
-        sourcemap: true
-        keepNames: true
-        external: []
-        tsconfig: './tsconfig.json'
-    localstack:
-        stages:
-            - local
-        host: http://localhost
-        edgePort: 4566
-        autostart: false
-        lambda:
-            mountCode: true
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+    edgePort: 4566
+    autostart: false
+    lambda:
+      mountCode: true
 
 resources:
-    Resources:
-        JobsQueue:
-            Type: AWS::SQS::Queue
-            Properties:
-                QueueName: JobsQueue
+  Resources:
+    JobsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: JobsQueue

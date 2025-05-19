@@ -12,7 +12,7 @@ services:
         ports:
             - "4566:4566"
         environment:
-            - SERVICES=sqs,lambda,cloudformation,ssm,logs,iam
+            - SERVICES=sqs,lambda,cloudformation,ssm,logs,iam,ecr
             - DEBUG=1
             - DOCKER_HOST=unix:///var/run/docker.sock
         volumes:

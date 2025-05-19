@@ -4,7 +4,6 @@ import {
     SQSClient,
     SendMessageCommand,
 } from '@aws-sdk/client-sqs'
-import { sqsQueueName } from './constants'
 
 const client = new SQSClient({
     region: process.env.AWS_REGION!,
@@ -12,19 +11,23 @@ const client = new SQSClient({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
-    endpoint:
+/*     endpoint:
         process.env.NODE_ENV === 'development'
             ? 'http://localhost:4566'
-            : undefined,
+            : undefined, */
 })
+
+const sqsQueueName = process.env.SQS_QUEUE_NAME!
 
 export async function addJobToSqsQueue(jobId: string) {
     try {
+        console.log({ sqsQueueName })
         const { QueueUrl } = await client.send(
             new GetQueueUrlCommand({
                 QueueName: sqsQueueName,
             })
         )
+        console.log({ QueueUrl })
 
         const command = new SendMessageCommand({
             QueueUrl,

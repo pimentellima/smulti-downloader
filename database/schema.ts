@@ -1,9 +1,12 @@
+import type { JsonData } from '@/lib/schemas/job'
 import {
+    json,
+    jsonb,
     pgEnum,
     pgTable,
     text,
     timestamp,
-    uuid
+    uuid,
 } from 'drizzle-orm/pg-core'
 
 export const jobStatusEnum = pgEnum('job_status', [
@@ -20,6 +23,7 @@ export const jobs = pgTable('jobs', {
         .references(() => requests.id, { onDelete: 'cascade' })
         .notNull(),
     url: text('url').notNull(),
+    json: jsonb('json').$type<JsonData>(),
     status: jobStatusEnum('status').notNull().default('queued'),
     title: text('title'),
 })

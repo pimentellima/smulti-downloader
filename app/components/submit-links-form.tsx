@@ -56,14 +56,12 @@ export default function SubmitLinksForm({
             setPageError?.(formDictionary[locale].errors.emptyLinks)
             return
         }
-
         const result = await createJobs.mutateAsync(
             {
                 urls: links,
                 requestId,
             },
             {
-                onSuccess: () => setInputValue(''),
                 onError: (err) => {
                     setPageError?.(formDictionary[locale].errors.invalidLinks)
                     console.error('Error processing links:', err)
