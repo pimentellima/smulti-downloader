@@ -1,2 +1,3 @@
 psycopg2-binary==2.9.9
-yt-dlp==2023.11.16
+yt-dlp==2025.04.30
+ffmpeg

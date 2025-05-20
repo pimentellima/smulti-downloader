@@ -3,15 +3,35 @@ import yt_dlp
 import psycopg2
 from psycopg2.extras import DictCursor
 import json
+import shutil
 
+BASE_DIR = os.path.dirname(__file__)
+ORIGINAL_COOKIE_PATH = os.path.join(os.environ.get("LAMBDA_TASK_ROOT", "/var/task"), "cookies.txt")
+TMP_COOKIE_PATH = "/tmp/cookies.txt"
+
+if not os.path.exists(TMP_COOKIE_PATH):
+    try:
+        shutil.copy(ORIGINAL_COOKIE_PATH, TMP_COOKIE_PATH)
+    except Exception as e:
+        print(f"Erro ao copiar cookies.txt: {e}")
+        
 ydl_opts = {
-    'cookiefile': 'cookies.txt', 
-    'cachedir': False  
+    'cookiefile': TMP_COOKIE_PATH, 
+    'cachedir': False,
+    'listformats': True,
+    'extractor_args': {
+        'youtube': {
+            'player_client': 'all',
+        }
+    },
+    'verbose': True,
+    
 }
 def extract_job_info(video_url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=False)
 
+    print("formats::", info.get("formats", []))
     formats_mp4 = []
     formats_mp3 = []
 

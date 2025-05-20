@@ -1,3 +1,4 @@
+org: matheuspimentel
 service: sqs-worker
 plugins:
   - serverless-localstack

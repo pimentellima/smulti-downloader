@@ -9,4 +9,5 @@
 
 
 .serverless/
-# cookies.txt
+cookies.txt
+*.Zone.Identifier
