@@ -32,7 +32,7 @@ export type Format = {
 
 export type JsonData = {
     title: string
-    formats_mp4: (Format & { resolution: string })[]
-    formats_mp3: Omit<Format, 'resolution'>[]
+    formats_video: (Format & { resolution: string })[]
+    formats_audio: Omit<Format, 'resolution'>[]
     thumbnail_url: string
 }

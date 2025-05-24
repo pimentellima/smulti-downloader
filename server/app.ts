@@ -25,21 +25,27 @@ export const app = express()
 
 app.use(bodyParser.json())
 app.use((_, __, next) => DatabaseContext.run(db, next))
+
+// api
 app.post('/api/test', async (req, res) => {
     const db = database()
     try {
-        await db.execute(sql`SELECT 1`);
-        res.json({ success: true, message: 'Database connection successful' });
+        await db.execute(sql`SELECT 1`)
+        res.json({ success: true, message: 'Database connection successful' })
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Database connection failed', error: String(error) });
+        console.error(error)
+        res.status(500).json({
+            success: false,
+            message: 'Database connection failed',
+            error: String(error),
+        })
     }
 })
 app.get('/api', (req, res) => {
     res.json({ message: 'Hello from API' })
 })
 app.use('/api/jobs', jobsRoute)
-app.use(languageMiddleware)
+
 app.use(
     createRequestHandler({
         build: () => import('virtual:react-router/server-build'),
@@ -50,4 +56,6 @@ app.use(
         },
     })
 )
+app.use(languageMiddleware)
+
 app.use(errorMiddleware)

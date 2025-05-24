@@ -1,4 +1,3 @@
-'use client'
 import { useCreateJobs } from '@/hooks/jobs'
 import { Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'

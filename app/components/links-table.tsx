@@ -1,5 +1,3 @@
-'use client'
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,6 +26,16 @@ import {
     XIcon,
 } from 'lucide-react'
 import { useLocale } from '@/hooks/locale'
+import FormatSelector from './format-selector'
+import { jobs } from '~/database/schema'
+import { useMemo, useState } from 'react'
+import type { Format } from '@/lib/schemas/job'
+
+type JobFormatInfo = {
+    jobId: string
+    downloadUrl: string
+    formatId: string
+}
 
 interface LinksTableProps {
     data: Job[]
@@ -83,6 +91,7 @@ export function LinksTable({
     onRetry,
     onRemoveJob,
 }: LinksTableProps) {
+    const [jobsFormatInfo, setJobsFormatInfo] = useState<JobFormatInfo[]>([])
     const locale = useLocale()
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
 
@@ -125,98 +134,131 @@ export function LinksTable({
         }
     }
 
-    const columns: ColumnDef<Job>[] = [
-        {
-            accessorKey: 'status',
-            header: dictionary.status,
-            cell: ({ row }) => getStatusBadge(row.original.status),
-            size: 50,
-        },
-        {
-            id: 'actions',
-            header: dictionary.actions,
-            cell: ({ row }) => {
-                const job = row.original
-                const isJobRetrying = isRetrying[job.id] || false
+    const onSelectFormat = (format: Format, jobId: string) => {
+        const newJobs: JobFormatInfo[] = [
+            ...jobsFormatInfo,
+            { jobId, downloadUrl: format.url, formatId: format.format_id },
+        ]
+        setJobsFormatInfo(newJobs)
+    }
 
-                return (
-                    <div className="flex gap-1 w-min">
-                        {job.status === 'error' ? (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                title={
-                                    isJobRetrying
-                                        ? dictionary.retrying
-                                        : dictionary.retry
-                                }
-                                onClick={() => onRetry(job.id)}
-                                disabled={isJobRetrying}
-                            >
-                                {isJobRetrying ? (
-                                    <Loader2 className="h-4 w-4  animate-spin" />
-                                ) : (
-                                    <RefreshCw className="h-4 w-4 " />
+    const columns: ColumnDef<Job>[] = useMemo(
+        () => [
+            {
+                accessorKey: 'status',
+                header: dictionary.status,
+                cell: ({ row }) => getStatusBadge(row.original.status),
+                size: 50,
+            },
+            {
+                id: 'actions',
+                header: dictionary.actions,
+                cell: ({ row }) => {
+                    const job = row.original
+                    const isJobRetrying = isRetrying[job.id] || false
+                    const formatInfo = jobsFormatInfo.find(
+                        (jobWithUrl) => jobWithUrl.jobId === job.id
+                    )
+                    const downloadUrl = formatInfo?.downloadUrl
+
+                    return (
+                        <div className="flex gap-1 w-min">
+                            <FormatSelector
+                                selectedFormat={[
+                                    ...(job.json?.formats_audio || []),
+                                    ...(job.json?.formats_video || []),
+                                ].find(
+                                    (format) =>
+                                        format.format_id ===
+                                        formatInfo?.formatId
                                 )}
-                            </Button>
-                        ) : job.status !== 'ready' ? (
-                            <Button
-                                title={dictionary.download}
-                                disabled
-                                variant="outline"
-                                size="icon"
-                            >
-                                <Download className="h-4 w-4" />
-                            </Button>
-                        ) : (
-                            <Button
-                                title={dictionary.download}
-                                variant="outline"
-                                size="icon"
-                                asChild
-                            >
-                                <a
-                                    download
-                                    href={`${BASE_URL}/api/processed-audios/single/${job.id}`}
+                                disabled={job.status !== 'ready'}
+                                formats_audio={job.json?.formats_audio || []}
+                                formats_video={job.json?.formats_video || []}
+                                onSelect={(format) =>
+                                    onSelectFormat(format, job.id)
+                                }
+                            />
+                            {job.status === 'error' ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title={
+                                        isJobRetrying
+                                            ? dictionary.retrying
+                                            : dictionary.retry
+                                    }
+                                    onClick={() => onRetry(job.id)}
+                                    disabled={isJobRetrying}
+                                >
+                                    {isJobRetrying ? (
+                                        <Loader2 className="h-4 w-4  animate-spin" />
+                                    ) : (
+                                        <RefreshCw className="h-4 w-4 " />
+                                    )}
+                                </Button>
+                            ) : downloadUrl ? (
+                                <Button
+                                    title={dictionary.download}
+                                    variant="outline"
+                                    size="icon"
+                                    asChild
+                                >
+                                    <a
+                                        download
+                                        href={downloadUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                            ) : (
+                                <Button
+                                    title={dictionary.download}
+                                    disabled
+                                    variant="outline"
+                                    size="icon"
                                 >
                                     <Download className="h-4 w-4" />
-                                </a>
+                                </Button>
+                            )}
+                            <Button
+                                size="icon"
+                                title={dictionary.delete}
+                                onClick={() => onRemoveJob(job.id)}
+                                variant={'outline'}
+                            >
+                                <XIcon />
                             </Button>
-                        )}
-                        <Button
-                            size="icon"
-                            title={dictionary.delete}
-                            onClick={() => onRemoveJob(job.id)}
-                            variant={'outline'}
-                        >
-                            <XIcon />
-                        </Button>
-                    </div>
-                )
-            },
-            size: 25,
-            maxSize: 25,
-        },
-        {
-            accessorKey: 'title',
-            header: dictionary.title,
-            cell: ({ row }) => {
-                return (
-                    <div>
-                        <div className="font-medium truncate">
-                            {row.original.title || 'Untitled'}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                            {row.original.url}
-                        </div>
-                    </div>
-                )
+                    )
+                },
+                size: 25,
+                maxSize: 25,
             },
-            minSize: 700,
-            maxSize: 500,
-            size: 200,
-        },
-    ]
+            {
+                accessorKey: 'title',
+                header: dictionary.title,
+                cell: ({ row }) => {
+                    return (
+                        <div>
+                            <div className="font-medium truncate">
+                                {row.original.title || 'Untitled'}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                                {row.original.url}
+                            </div>
+                        </div>
+                    )
+                },
+                minSize: 700,
+                maxSize: 500,
+                size: 200,
+            },
+        ],
+        [data, jobsFormatInfo]
+    )
 
     const table = useReactTable({
         data,
@@ -302,7 +344,7 @@ export function LinksTable({
                     {dictionary.pageInfo(
                         table.getState().pagination.pageIndex + 1,
                         table.getPageCount(),
-                        data.length
+                        jobsFormatInfo.length
                     )}
                 </div>
                 <div className="flex items-center space-x-2">

@@ -32,8 +32,8 @@ def extract_job_info(video_url):
         info = ydl.extract_info(video_url, download=False)
 
     print("formats::", info.get("formats", []))
-    formats_mp4 = []
-    formats_mp3 = []
+    formats_video = []
+    formats_audio = []
 
     for f in info.get("formats", []):
         ext = f.get("ext")
@@ -48,20 +48,20 @@ def extract_job_info(video_url):
         }
 
         if vcodec != "none":
-            formats_mp4.append({
+            formats_video.append({
                 **base_format,
                 "resolution": f"{f.get('width')}x{f.get('height')}" if f.get("width") and f.get("height") else "unknown"
             })
         elif acodec != "none":
-            formats_mp3.append(base_format)
+            formats_audio.append(base_format)
 
     return {
         "title": info.get("title"),
         "url": video_url,
         "json": {
             "title": info.get("title"),
-            "formats_mp4": formats_mp4,
-            "formats_mp3": formats_mp3,
+            "formats_video": formats_video,
+            "formats_audio": formats_audio,
             "thumbnail_url": info.get("thumbnail")
         }
     }
