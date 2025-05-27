@@ -1,5 +1,3 @@
-import { Check, ChevronDown, FileAudio, FileVideo } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -10,16 +8,27 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Format, JsonData } from '@/lib/schemas/job'
 import { useLocale } from '@/hooks/locale'
-import { Badge } from './ui/badge'
+import { getLanguageLabel } from '@/lib/language-labels'
+import { Check, ChevronDown, FileAudio, FileVideo } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface FormatSelectosProps {
-    formats_audio: JsonData['formats_audio']
-    formats_video: JsonData['formats_video']
-    onSelect: (format: Format) => void
-    selectedFormat: Format | undefined
+    onSelect: (format: FormatOption) => void
+    formatOptions: FormatOption[]
+    selectedFormat: FormatOption | undefined
     disabled?: boolean
+}
+
+export interface FormatOption {
+    format_id: string
+    ext: 'm4a' | 'webm' | 'mp4'
+    resolution?: string
+    acodec?: string
+    vcodec?: string
+    filesize?: number
+    format_note?: string
+    language?: string
 }
 
 const formatDictionary = {
@@ -36,13 +45,23 @@ const formatDictionary = {
 }
 
 export default function FormatSelector({
-    formats_audio,
-    formats_video,
+    formatOptions,
     onSelect,
     disabled,
-    selectedFormat
+    selectedFormat,
 }: FormatSelectosProps) {
     const locale = useLocale()
+    const formats_audio = useMemo(
+        () =>
+            formatOptions.filter(
+                (format) => format.acodec !== 'none' && format.vcodec === 'none'
+            ),
+        [formatOptions]
+    )
+    const formats_video = useMemo(
+        () => formatOptions.filter((format) => format.vcodec !== 'none'),
+        [formatOptions]
+    )
 
     const formatFileSize = (bytes: number) => {
         if (bytes < 1024) return bytes + ' B'
@@ -51,7 +70,7 @@ export default function FormatSelector({
         else return (bytes / 1073741824).toFixed(1) + ' GB'
     }
 
-    const isHighQuality = (format: Format) => {
+    const isHighQuality = (format: FormatOption) => {
         if (!format.resolution) return false
         const [width, height] = format.resolution.split('x')
         const widthNumber = parseInt(width, 10)
@@ -67,21 +86,47 @@ export default function FormatSelector({
 
     const videoFormatsSorted = useMemo(() => {
         return formats_video.sort((a, b) => {
+            if (!a.resolution || !b.resolution) return 0
             const aWidth = parseInt(a.resolution.split('x')[0], 10)
             const bWidth = parseInt(b.resolution.split('x')[0], 10)
             return bWidth - aWidth
         })
     }, [formats_video])
+
     const audioFormatsSorted = useMemo(() => {
         return formats_audio.sort((a, b) => {
-            return a.filesize - b.filesize
+            if (
+                a.format_note?.includes('original') &&
+                !b.format_note?.includes('original')
+            )
+                return -1
+            if (
+                !a.format_note?.includes('original') &&
+                b.format_note?.includes('original')
+            )
+                return 1
+            if (!a.filesize || !b.filesize) return 0
+            return b.filesize - a.filesize
         })
     }, [formats_audio])
+
+    const getFormatLabel = (format: FormatOption) => {
+        if (format.resolution) {
+            return `${format.ext} (${formatFileResolution(format.resolution)})`
+        }
+        if (format.language)
+            return `${format.ext} ${getLanguageLabel(format.language)}`
+        return `${format.ext}`
+    }
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button disabled={disabled} variant="outline" className="justify-between w-min">
+                <Button
+                    disabled={disabled}
+                    variant="outline"
+                    className="justify-between w-min"
+                >
                     {selectedFormat ? (
                         <span className="flex items-center gap-2">
                             {selectedFormat.resolution ? (
@@ -89,16 +134,12 @@ export default function FormatSelector({
                             ) : (
                                 <FileAudio className="h-4 w-4" />
                             )}
-                            {selectedFormat.resolution
-                                ? `${
-                                      selectedFormat.ext
-                                  } (${formatFileResolution(
-                                      selectedFormat.resolution
-                                  )})`
-                                : `${selectedFormat.ext} (Áudio)`}
-                            <span className="text-muted-foreground text-xs">
-                                {formatFileSize(selectedFormat.filesize)}
-                            </span>
+                            {getFormatLabel(selectedFormat)}
+                            {selectedFormat.filesize && (
+                                <span className="text-muted-foreground text-xs">
+                                    {formatFileSize(selectedFormat.filesize)}
+                                </span>
+                            )}
                         </span>
                     ) : (
                         formatDictionary[locale].format
@@ -106,7 +147,7 @@ export default function FormatSelector({
                     <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-96 max-h-[300px] overflow-y-auto">
+            <DropdownMenuContent className="w-max max-h-[300px] overflow-y-auto">
                 {videoFormatsSorted.length > 0 && (
                     <>
                         <DropdownMenuLabel>
@@ -125,11 +166,7 @@ export default function FormatSelector({
                                     className="flex justify-between text-sm"
                                 >
                                     <span>
-                                        {format.ext} (
-                                        {formatFileResolution(
-                                            format.resolution
-                                        )}
-                                        )
+                                        {getFormatLabel(format)}
                                         {isHighQuality(format) && (
                                             <span className="ml-1 text-xs font-bold text-primary">
                                                 HD
@@ -137,9 +174,13 @@ export default function FormatSelector({
                                         )}
                                     </span>
                                     <div className="flex gap-1">
-                                        <span className="text-muted-foreground text-xs">
-                                            {formatFileSize(format.filesize)}
-                                        </span>
+                                        {format.filesize && (
+                                            <span className="text-muted-foreground text-xs">
+                                                {formatFileSize(
+                                                    format.filesize
+                                                )}
+                                            </span>
+                                        )}
                                         {selectedFormat?.format_id ===
                                             format.format_id && (
                                             <Check className="h-4 w-4 ml-2" />
@@ -172,13 +213,15 @@ export default function FormatSelector({
                                     }}
                                     className="flex justify-between text-sm"
                                 >
-                                    <span>
-                                        {format.ext} 
-                                    </span>
+                                    {getFormatLabel(format)}
                                     <div className="flex gap-1">
-                                        <span className="text-muted-foreground text-xs">
-                                            {formatFileSize(format.filesize)}
-                                        </span>
+                                        {format.filesize && (
+                                            <span className="text-muted-foreground text-xs">
+                                                {formatFileSize(
+                                                    format.filesize
+                                                )}
+                                            </span>
+                                        )}
                                         {selectedFormat?.format_id ===
                                             format.format_id && (
                                             <Check className="h-4 w-4 ml-2" />

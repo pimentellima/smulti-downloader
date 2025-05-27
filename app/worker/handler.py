@@ -19,6 +19,7 @@ ydl_opts = {
     'cookiefile': TMP_COOKIE_PATH, 
     'cachedir': False,
     'listformats': True,
+    'format': "bv*+ba[format_note~='(?i)original'] / (bv*+ba/b)",
     'extractor_args': {
         'youtube': {
             'player_client': 'all',
@@ -45,12 +46,16 @@ def extract_job_info(video_url):
             "ext": ext,
             "filesize": f.get("filesize"),
             "format_id": f.get("format_id"),
+            "acodec": acodec,
+            'language': f.get('language'),
+            "vcodec": vcodec,
+            "format_note": f.get("format_note"),
         }
 
         if vcodec != "none":
             formats_video.append({
                 **base_format,
-                "resolution": f"{f.get('width')}x{f.get('height')}" if f.get("width") and f.get("height") else "unknown"
+                "resolution": f"{f.get('width')}x{f.get('height')}" if f.get("width") and f.get("height") else "unknown",
             })
         elif acodec != "none":
             formats_audio.append(base_format)

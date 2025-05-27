@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button'
 import { BASE_URL } from '@/lib/constants'
 import { useCancelJob, useJobs, useRetryJobs } from '@/hooks/jobs'
 import { DownloadIcon, Loader2, RefreshCw } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useLocale } from '@/hooks/locale'
+import FormatSelector from './format-selector'
+import type { Format } from '@/lib/schemas/job'
 
 const downloaderDictionary = {
     'en-US': {
@@ -27,6 +29,7 @@ interface DownloaderProps {
 export default function Downloader({ setPageError }: DownloaderProps) {
     const locale = useLocale()
     const [searchParams, setSearchParams] = useSearchParams()
+    const [selectedFormat, setSelectedFormat] = useState<string | null>(null)
     const requestId = searchParams.get('requestId')
     const cancelJob = useCancelJob()
     const retryJobs = useRetryJobs()
@@ -74,19 +77,55 @@ export default function Downloader({ setPageError }: DownloaderProps) {
 
     if (!jobs) return null
 
+    // Cria uma lista de todos os formatos presentes em todos os jobs (interseção)
+    const commonFormats = useMemo(() => {
+        const formats = jobs.map((job) => [
+            ...(job.json?.formats_audio || []),
+            ...(job.json?.formats_video || []),
+        ])
+        if (formats.length === 0) return []
+
+        return formats
+            .reduce((acc, list) => {
+                const idsInList = new Set(list.map((f) => f.format_id))
+                return acc.filter((f) => idsInList.has(f.format_id))
+            })
+            .map((f) => {
+                const { filesize, ...format } = f
+                return format
+            })
+    }, [jobs])
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-4 mt-4">
                 <div className="flex items-center justify-center sm:justify-start w-full space-x-1">
-                    {canDownloadCount > 0 && (
+                    <FormatSelector
+                        disabled={isLoading || !commonFormats.length}
+                        selectedFormat={
+                            commonFormats.find(
+                                (f) => f.format_id === selectedFormat
+                            ) || undefined
+                        }
+                        onSelect={(format) => {
+                            setSelectedFormat(format.format_id)
+                        }}
+                        formatOptions={commonFormats}
+                    />
+                    {canDownloadCount > 0 && selectedFormat ? (
                         <Button asChild size="lg" variant="default">
                             <a
                                 download
-                                href={`${BASE_URL}/api/processed-audios/batch/${requestId}`}
+                                href={`${BASE_URL}/api/jobs/download/batch?formatId=${selectedFormat}&requestId=${requestId}`}
                             >
                                 <DownloadIcon className="mr-2 h-3 w-3" />
                                 {`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
                             </a>
+                        </Button>
+                    ) : (
+                        <Button disabled size="lg" variant="default">
+                            <DownloadIcon className="mr-2 h-3 w-3" />
+                            {`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
                         </Button>
                     )}
                     {failedJobsCount > 0 && (

@@ -18,8 +18,7 @@ export function useJobs(requestId: string | null) {
             const allComplete = query.state.data?.every(
                 (job: Job) => job.status === 'ready' || job.status === 'error'
             )
-
-            return allComplete ? false : 2000
+            return allComplete ? false : 1000
         },
     })
 }

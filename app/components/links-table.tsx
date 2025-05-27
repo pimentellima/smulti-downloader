@@ -26,14 +26,13 @@ import {
     XIcon,
 } from 'lucide-react'
 import { useLocale } from '@/hooks/locale'
-import FormatSelector from './format-selector'
+import FormatSelector, { type FormatOption } from './format-selector'
 import { jobs } from '~/database/schema'
 import { useMemo, useState } from 'react'
 import type { Format } from '@/lib/schemas/job'
 
 type JobFormatInfo = {
     jobId: string
-    downloadUrl: string
     formatId: string
 }
 
@@ -91,7 +90,7 @@ export function LinksTable({
     onRetry,
     onRemoveJob,
 }: LinksTableProps) {
-    const [jobsFormatInfo, setJobsFormatInfo] = useState<JobFormatInfo[]>([])
+    const [selectedFormats, setSelectedFormats] = useState<JobFormatInfo[]>([])
     const locale = useLocale()
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
 
@@ -134,14 +133,12 @@ export function LinksTable({
         }
     }
 
-    const onSelectFormat = (format: Format, jobId: string) => {
-        const newJobs: JobFormatInfo[] = [
-            ...jobsFormatInfo,
-            { jobId, downloadUrl: format.url, formatId: format.format_id },
-        ]
-        setJobsFormatInfo(newJobs)
+    const onSelectFormat = (format: FormatOption, jobId: string) => {
+        setSelectedFormats([
+            ...selectedFormats.filter((job) => job.jobId !== jobId),
+            { jobId, formatId: format.format_id },
+        ])
     }
-
     const columns: ColumnDef<Job>[] = useMemo(
         () => [
             {
@@ -156,25 +153,24 @@ export function LinksTable({
                 cell: ({ row }) => {
                     const job = row.original
                     const isJobRetrying = isRetrying[job.id] || false
-                    const formatInfo = jobsFormatInfo.find(
+                    const formatInfo = selectedFormats.find(
                         (jobWithUrl) => jobWithUrl.jobId === job.id
                     )
-                    const downloadUrl = formatInfo?.downloadUrl
+                    const formatOptions = [
+                        ...(job.json?.formats_audio || []),
+                        ...(job.json?.formats_video || []),
+                    ]
 
                     return (
                         <div className="flex gap-1 w-min">
                             <FormatSelector
-                                selectedFormat={[
-                                    ...(job.json?.formats_audio || []),
-                                    ...(job.json?.formats_video || []),
-                                ].find(
+                                formatOptions={formatOptions}
+                                selectedFormat={formatOptions.find(
                                     (format) =>
                                         format.format_id ===
                                         formatInfo?.formatId
                                 )}
                                 disabled={job.status !== 'ready'}
-                                formats_audio={job.json?.formats_audio || []}
-                                formats_video={job.json?.formats_video || []}
                                 onSelect={(format) =>
                                     onSelectFormat(format, job.id)
                                 }
@@ -197,7 +193,7 @@ export function LinksTable({
                                         <RefreshCw className="h-4 w-4 " />
                                     )}
                                 </Button>
-                            ) : downloadUrl ? (
+                            ) : formatInfo ? (
                                 <Button
                                     title={dictionary.download}
                                     variant="outline"
@@ -206,7 +202,7 @@ export function LinksTable({
                                 >
                                     <a
                                         download
-                                        href={downloadUrl}
+                                        href={`${BASE_URL}/api/jobs/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
@@ -257,7 +253,7 @@ export function LinksTable({
                 size: 200,
             },
         ],
-        [data, jobsFormatInfo]
+        [data, selectedFormats]
     )
 
     const table = useReactTable({
@@ -344,7 +340,7 @@ export function LinksTable({
                     {dictionary.pageInfo(
                         table.getState().pagination.pageIndex + 1,
                         table.getPageCount(),
-                        jobsFormatInfo.length
+                        data.length
                     )}
                 </div>
                 <div className="flex items-center space-x-2">

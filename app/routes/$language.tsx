@@ -54,7 +54,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         await queryClient.prefetchQuery({
             queryKey: ['jobs', requestId],
             queryFn: () =>
-                getJobsByRequestId(requestId, { filterCancelled: true }),
+                getJobsByRequestId(requestId),
         })
     }
 

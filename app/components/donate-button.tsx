@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { type Locale } from '@/lib/dictionaries'
+import type { Locale } from '@/lib/locale'
 import { Heart } from 'lucide-react'
 
 export function DonateButton({ locale }: { locale?: Locale }) {
