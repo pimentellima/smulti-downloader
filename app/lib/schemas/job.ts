@@ -1,5 +1,6 @@
+import type { InferSelectModel } from 'drizzle-orm'
 import { z } from 'zod'
-import { jobStatusEnum } from '~/database/schema'
+import { formats, jobStatusEnum } from '~/database/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
@@ -34,18 +35,7 @@ export const retryJobsSchema = z
 export type RetryJobsSchema = z.infer<typeof retryJobsSchema>
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>
 
-export type Format = {
-    format_id: string
-    ext: 'm4a' | 'webm' | 'mp4'
-    resolution?: string
-    acodec?: string
-    vcodec?: string
-    filesize: number
-    format_note?: string
-    language?: string
-    tbr: number
-    url: string
-}
+export type Format = InferSelectModel<typeof formats>
 
 export type JsonData = {
     title: string

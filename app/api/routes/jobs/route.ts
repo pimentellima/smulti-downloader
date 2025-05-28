@@ -153,12 +153,11 @@ jobsRoute.get('/download/batch', async (req, res, next) => {
     }
 })
 
-async function createStreamForJobFormat(job: Job, formatId: string) {
-    const videoFormats = job.json?.formats_video || []
-    const audioFormats = job.json?.formats_audio || []
-    const format = [...videoFormats, ...audioFormats].find(
-        (format) => format.format_id === formatId
-    )
+async function createStreamForJobFormat(
+    job: Job & { formats: Format[] },
+    formatId: string
+) {
+    const format = job.formats.find((format) => format.formatId === formatId)
 
     if (!format) {
         throw new ApiError({
@@ -179,15 +178,18 @@ async function createStreamForJobFormat(job: Job, formatId: string) {
 
     // video only
     if (format.vcodec !== 'none' && format.acodec === 'none') {
+        const audioFormats = job.formats.filter(
+            (f) => f.acodec !== 'none' && f.vcodec === 'none'
+        )
         const filteredSortedAudioFormats = audioFormats.sort((a, b) => {
             if (
-                a.format_note?.includes('original') &&
-                !b.format_note?.includes('original')
+                a.formatNote?.includes('original') &&
+                !b.formatNote?.includes('original')
             )
                 return -1
             if (
-                format.format_note?.includes('original') &&
-                !a.format_note?.includes('original')
+                format.formatNote?.includes('original') &&
+                !a.formatNote?.includes('original')
             )
                 return 1
             if (format.ext === 'mp4' && a.ext === 'm4a' && b.ext !== 'm4a')

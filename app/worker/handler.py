@@ -26,53 +26,40 @@ ydl_opts = {
         }
     },
     'verbose': True,
-    
 }
+
 def extract_job_info(video_url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=False)
 
     print("formats::", info.get("formats", []))
-    formats_video = []
-    formats_audio = []
+    formats = []
 
     for f in info.get("formats", []):
-        ext = f.get("ext")
-        vcodec = f.get("vcodec")
-        acodec = f.get("acodec")
-
-        base_format = {
-            "url": f.get("url"),
-            "ext": ext,
-            "filesize": f.get("filesize"),
+        filesize_bytes = f.get("filesize")
+        format_data = {
             "format_id": f.get("format_id"),
-            "acodec": acodec,
-            'language': f.get('language'),
-            "vcodec": vcodec,
+            "url": f.get("url"),
+            "ext": f.get("ext"),
+            "filesize": round(filesize_bytes / (1024 * 1024), 2) if filesize_bytes else None,
+            "acodec": f.get("acodec"),
+            "vcodec": f.get("vcodec"),
+            "language": f.get("language"),
             "format_note": f.get("format_note"),
+            "tbr": str(f.get("tbr")) if f.get("tbr") else None,
+            "resolution": f"{f.get('width')}x{f.get('height')}" if f.get("width") and f.get("height") else None,
         }
-
-        if vcodec != "none":
-            formats_video.append({
-                **base_format,
-                "resolution": f"{f.get('width')}x{f.get('height')}" if f.get("width") and f.get("height") else "unknown",
-            })
-        elif acodec != "none":
-            formats_audio.append(base_format)
+        formats.append(format_data)
 
     return {
         "title": info.get("title"),
         "url": video_url,
-        "json": {
-            "title": info.get("title"),
-            "formats_video": formats_video,
-            "formats_audio": formats_audio,
-            "thumbnail_url": info.get("thumbnail")
-        }
+        "formats": formats
     }
 
 def insert_job(conn, job_id):
     with conn.cursor(cursor_factory=DictCursor) as cur:
+        # Buscar o job
         cur.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
         job = cur.fetchone()
         
@@ -82,13 +69,37 @@ def insert_job(conn, job_id):
                 
         video_url = job["url"]
         job_data = extract_job_info(video_url)
+        
+        # Atualizar o job com título e status
         cur.execute(
-            "UPDATE jobs SET json = %s, status = %s, title = %s WHERE id = %s",
-            (json.dumps(job_data["json"]), 'ready', job_data["title"], job_id)
+            "UPDATE jobs SET title = %s, status = %s WHERE id = %s",
+            (job_data["title"], 'ready', job_id)
         )
+        
+        # Inserir os formatos na tabela formats
+        for format_data in job_data["formats"]:
+            cur.execute("""
+                INSERT INTO formats (
+                    format_id, job_id, ext, resolution, acodec, vcodec, 
+                    filesize, tbr, url, language, format_note
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                format_data["format_id"],
+                job_id,
+                format_data["ext"],
+                format_data["resolution"],
+                format_data["acodec"],
+                format_data["vcodec"],
+                format_data["filesize"],
+                format_data["tbr"],
+                format_data["url"],
+                format_data["language"],
+                format_data["format_note"]
+            ))
             
     conn.commit()
-    print("Job inserido com sucesso.")
+    print(f"Job {job_id} processado com sucesso. Título: {job_data['title']}")
+
 def lambda_handler(event, context=None):
     db_connection_string = os.environ.get('DATABASE_URL')
     
@@ -121,5 +132,4 @@ def lambda_handler(event, context=None):
             if conn is not None and not conn.closed:
                 conn.close()
 
-    return {"statusCode": 200}
     return {"statusCode": 200}

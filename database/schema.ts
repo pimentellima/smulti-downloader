@@ -1,12 +1,11 @@
-import type { JsonData } from '@/lib/schemas/job'
+import { relations } from 'drizzle-orm'
 import {
-    json,
-    jsonb,
+    integer,
     pgEnum,
     pgTable,
     text,
     timestamp,
-    uuid,
+    uuid
 } from 'drizzle-orm/pg-core'
 
 export const jobStatusEnum = pgEnum('job_status', [
@@ -23,9 +22,26 @@ export const jobs = pgTable('jobs', {
         .references(() => requests.id, { onDelete: 'cascade' })
         .notNull(),
     url: text('url').notNull(),
-    json: jsonb('json').$type<JsonData>(),
     status: jobStatusEnum('status').notNull().default('queued'),
     title: text('title'),
+})
+
+export const formats = pgTable('formats', {
+    formatId: text('format_id').primaryKey(),
+    jobId: uuid('job_id')
+        .references(() => jobs.id, { onDelete: 'cascade' })
+        .notNull(),
+    ext: text('ext').notNull(),
+    resolution: text('resolution'),
+    acodec: text('acodec'),
+    vcodec: text('vcodec'),
+    filesize: integer('filesize').default(0),
+    tbr: text('tbr'),
+    url: text('url').notNull(),
+    downloadUrl: text('download_url'),
+    language: text('language'),
+    formatNote: text('format_note'),
+    createdAt: timestamp('created_at').defaultNow(),
 })
 
 export const requests = pgTable('requests', {
@@ -46,3 +62,14 @@ export const users = pgTable('users', {
     stripeSubscriptionId: text('stripe_subscription_id').unique(),
     createdAt: timestamp('created_at').defaultNow(),
 })
+
+export const jobRelations = relations(jobs, ({ many }) => ({
+    formats: many(formats),
+}))
+
+export const formatRelations = relations(formats, ({ one }) => ({
+    job: one(jobs, {
+        fields: [formats.jobId],
+        references: [jobs.id],
+    }),
+}))
