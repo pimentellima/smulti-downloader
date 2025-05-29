@@ -194,7 +194,7 @@ export function LinksTable({
                                 <DownloadButton
                                     size={'icon'}
                                     variant={'outline'}
-                                    downloadLink={`${BASE_URL}/api/jobs/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
+                                    downloadLink={`${BASE_URL}/api/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
                                     disabled={
                                         job.status !== 'ready' ||
                                         !formatInfo?.formatId

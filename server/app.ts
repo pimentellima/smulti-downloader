@@ -1,5 +1,6 @@
 import errorMiddleware from '@/api/middleware/error-middleware'
 import languageMiddleware from '@/api/middleware/language-middleware'
+import downloadRoute from '@/api/routes/download/route'
 import jobsRoute from '@/api/routes/jobs/route'
 import { createRequestHandler } from '@react-router/express'
 import bodyParser from 'body-parser'
@@ -30,6 +31,7 @@ app.get('/api', (req, res) => {
     res.json({ message: 'Hello from API' })
 })
 app.use('/api/jobs', jobsRoute)
+app.use('/api/download', downloadRoute)
 
 app.use(
     createRequestHandler({
