@@ -67,8 +67,7 @@ export default function Downloader({ setPageError }: DownloaderProps) {
             )
         }
     }
-    const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
-
+    const { error, data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
     const canDownloadCount = (jobs || []).filter(
         (job) => job.status === 'ready'
     ).length

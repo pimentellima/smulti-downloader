@@ -30,12 +30,6 @@ jobsRoute.get('/', async (req, res, next) => {
                 requestId: z.string().uuid(),
             })
             .parse(req.query)
-        if (!requestId) {
-            throw new ApiError({
-                code: 'bad_request',
-                message: 'requestId is required',
-            })
-        }
 
         const jobs = await getJobsByRequestId(requestId)
 
@@ -152,6 +146,11 @@ jobsRoute.get('/download/batch', async (req, res, next) => {
                 console.error(`Error adding ${job.id} (${job.title}):`, err)
             }
         }
+        res.setHeader('Content-Type', 'application/zip')
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${requestId}.zip"`
+        )
         archive.finalize()
         zipStream.pipe(res)
     } catch (err) {

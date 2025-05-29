@@ -13,13 +13,7 @@ export function useJobs(requestId: string | null) {
             return await response.json()
         },
         enabled: !!requestId,
-        refetchInterval: (query) => {
-            if (!query) return false
-            const allComplete = query.state.data?.every(
-                (job: Job) => job.status === 'ready' || job.status === 'error'
-            )
-            return allComplete ? false : 1000
-        },
+        refetchInterval: 2000,
     })
 }
 
@@ -87,16 +81,14 @@ export function useCancelJob() {
             const response = await fetch(`/api/jobs/${jobId}/cancel`, {
                 method: 'PUT',
             })
-
             if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to cancel job')
+                throw new Error('Failed to cancel job')
             }
-
-            return await response.json()
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['jobs'] })
+            await queryClient.refetchQueries({
+                queryKey: ['jobs'],
+            })
         },
     })
 }
