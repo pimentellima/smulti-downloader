@@ -36,10 +36,3 @@ export type RetryJobsSchema = z.infer<typeof retryJobsSchema>
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>
 
 export type Format = InferSelectModel<typeof formats>
-
-export type JsonData = {
-    title: string
-    formats_video: (Format & { resolution: string })[]
-    formats_audio: Omit<Format, 'resolution'>[]
-    thumbnail_url: string
-}

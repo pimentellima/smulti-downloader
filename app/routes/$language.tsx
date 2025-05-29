@@ -4,7 +4,7 @@ import {
     type LoaderFunctionArgs,
 } from 'react-router-dom'
 import { loadDictionary } from '@/lib/dictionaries'
-import { getJobsByRequestId } from '@/lib/api/jobs'
+import { getJobsByRequestId } from '@/lib/api'
 import {
     dehydrate,
     HydrationBoundary,

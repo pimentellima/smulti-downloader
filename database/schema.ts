@@ -5,7 +5,8 @@ import {
     pgTable,
     text,
     timestamp,
-    uuid
+    unique,
+    uuid,
 } from 'drizzle-orm/pg-core'
 
 export const jobStatusEnum = pgEnum('job_status', [
@@ -27,7 +28,8 @@ export const jobs = pgTable('jobs', {
 })
 
 export const formats = pgTable('formats', {
-    formatId: text('format_id').primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    formatId: text('format_id').notNull(),
     jobId: uuid('job_id')
         .references(() => jobs.id, { onDelete: 'cascade' })
         .notNull(),
@@ -35,14 +37,28 @@ export const formats = pgTable('formats', {
     resolution: text('resolution'),
     acodec: text('acodec'),
     vcodec: text('vcodec'),
-    filesize: integer('filesize').default(0),
+    filesize: integer('filesize'),
     tbr: text('tbr'),
     url: text('url').notNull(),
     downloadUrl: text('download_url'),
+    downloadUrlExpiresAt: timestamp('download_url_expires_at'),
     language: text('language'),
     formatNote: text('format_note'),
     createdAt: timestamp('created_at').defaultNow(),
 })
+
+export const requestDownloadUrl = pgTable('request_download_urls', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    requestId: uuid('request_id')
+        .references(() => requests.id, { onDelete: 'cascade' })
+        .notNull(),
+    formatId: text('format_id').notNull(),
+    downloadUrl: text('download_url').notNull(),
+    downloadUrlExpiresAt: timestamp('download_url_expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+    uniqueRequestFormat: unique().on(table.requestId, table.formatId),
+}))
 
 export const requests = pgTable('requests', {
     id: uuid('id').primaryKey().defaultRandom(),

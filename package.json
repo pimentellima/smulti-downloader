@@ -11,7 +11,10 @@
         "typecheck": "react-router typegen && tsc -b"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.817.0",
         "@aws-sdk/client-sqs": "^3.810.0",
+        "@aws-sdk/lib-storage": "^3.817.0",
+        "@aws-sdk/s3-request-presigner": "^3.817.0",
         "@formatjs/intl-localematcher": "^0.6.1",
         "@radix-ui/react-accordion": "^1.2.10",
         "@radix-ui/react-dropdown-menu": "^2.1.14",

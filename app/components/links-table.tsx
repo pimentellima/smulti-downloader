@@ -9,7 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { BASE_URL } from '@/lib/constants'
-import type { Job } from '@/lib/api/jobs'
+import type { Job } from '@/lib/api'
 import {
     flexRender,
     getCoreRowModel,
@@ -30,6 +30,7 @@ import FormatSelector, { type FormatOption } from './format-selector'
 import { jobs } from '~/database/schema'
 import { useMemo, useState } from 'react'
 import type { Format } from '@/lib/schemas/job'
+import DownloadButton from './download-button'
 
 type JobFormatInfo = {
     jobId: string
@@ -136,7 +137,7 @@ export function LinksTable({
     const onSelectFormat = (format: FormatOption, jobId: string) => {
         setSelectedFormats([
             ...selectedFormats.filter((job) => job.jobId !== jobId),
-            { jobId, formatId: format.format_id },
+            { jobId, formatId: format.formatId },
         ])
     }
     const columns: ColumnDef<Job>[] = useMemo(
@@ -156,10 +157,7 @@ export function LinksTable({
                     const formatInfo = selectedFormats.find(
                         (jobWithUrl) => jobWithUrl.jobId === job.id
                     )
-                    const formatOptions = [
-                        ...(job.json?.formats_audio || []),
-                        ...(job.json?.formats_video || []),
-                    ]
+                    const formatOptions = job.formats
 
                     return (
                         <div className="flex gap-1 w-min">
@@ -167,8 +165,7 @@ export function LinksTable({
                                 formatOptions={formatOptions}
                                 selectedFormat={formatOptions.find(
                                     (format) =>
-                                        format.format_id ===
-                                        formatInfo?.formatId
+                                        format.formatId === formatInfo?.formatId
                                 )}
                                 disabled={job.status !== 'ready'}
                                 onSelect={(format) =>
@@ -193,31 +190,16 @@ export function LinksTable({
                                         <RefreshCw className="h-4 w-4 " />
                                     )}
                                 </Button>
-                            ) : formatInfo ? (
-                                <Button
-                                    title={dictionary.download}
-                                    variant="outline"
-                                    size="icon"
-                                    asChild
-                                >
-                                    <a
-                                        download
-                                        href={`${BASE_URL}/api/jobs/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                    </a>
-                                </Button>
                             ) : (
-                                <Button
-                                    title={dictionary.download}
-                                    disabled
-                                    variant="outline"
-                                    size="icon"
-                                >
-                                    <Download className="h-4 w-4" />
-                                </Button>
+                                <DownloadButton
+                                    size={'icon'}
+                                    variant={'outline'}
+                                    downloadLink={`${BASE_URL}/api/jobs/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
+                                    disabled={
+                                        job.status !== 'ready' ||
+                                        !formatInfo?.formatId
+                                    }
+                                />
                             )}
                             <Button
                                 size="icon"

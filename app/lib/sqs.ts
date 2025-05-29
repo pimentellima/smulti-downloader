@@ -21,13 +21,11 @@ const sqsQueueName = process.env.SQS_QUEUE_NAME!
 
 export async function addJobToSqsQueue(jobId: string) {
     try {
-        console.log({ sqsQueueName })
         const { QueueUrl } = await client.send(
             new GetQueueUrlCommand({
                 QueueName: sqsQueueName,
             })
         )
-        console.log({ QueueUrl })
 
         const command = new SendMessageCommand({
             QueueUrl,
@@ -35,7 +33,6 @@ export async function addJobToSqsQueue(jobId: string) {
         })
         return await client.send(command)
     } catch (error) {
-        console.log(error)
         throw new ApiError({
             code: 'internal_server_error',
             message: 'Error sending message to SQS',

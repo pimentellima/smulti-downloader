@@ -21,14 +21,14 @@ interface FormatSelectosProps {
 }
 
 export interface FormatOption {
-    format_id: string
-    ext: 'm4a' | 'webm' | 'mp4'
-    resolution?: string
-    acodec?: string
-    vcodec?: string
-    filesize?: number
-    format_note?: string
-    language?: string
+    formatId: string
+    ext: string
+    resolution?: string | null
+    acodec?: string | null
+    vcodec?: string | null
+    filesize?: number | null
+    formatNote?: string | null
+    language?: string | null
 }
 
 const formatDictionary = {
@@ -51,23 +51,22 @@ export default function FormatSelector({
     selectedFormat,
 }: FormatSelectosProps) {
     const locale = useLocale()
-    const formats_audio = useMemo(
+    const audioFormats = useMemo(
         () =>
             formatOptions.filter(
                 (format) => format.acodec !== 'none' && format.vcodec === 'none'
             ),
         [formatOptions]
     )
-    const formats_video = useMemo(
+    const videoFormats = useMemo(
         () => formatOptions.filter((format) => format.vcodec !== 'none'),
         [formatOptions]
     )
 
-    const formatFileSize = (bytes: number) => {
-        if (bytes < 1024) return bytes + ' B'
-        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB'
-        else return (bytes / 1073741824).toFixed(1) + ' GB'
+    const formatFileSize = (megabytes: number) => {
+        if (megabytes < 1) return (megabytes * 1024).toFixed(1) + ' KB'
+        else if (megabytes < 1024) return megabytes.toFixed(1) + ' MB'
+        else return (megabytes / 1024).toFixed(1) + ' GB'
     }
 
     const isHighQuality = (format: FormatOption) => {
@@ -85,30 +84,30 @@ export default function FormatSelector({
     }
 
     const videoFormatsSorted = useMemo(() => {
-        return formats_video.sort((a, b) => {
+        return videoFormats.sort((a, b) => {
             if (!a.resolution || !b.resolution) return 0
             const aWidth = parseInt(a.resolution.split('x')[0], 10)
             const bWidth = parseInt(b.resolution.split('x')[0], 10)
             return bWidth - aWidth
         })
-    }, [formats_video])
+    }, [videoFormats])
 
     const audioFormatsSorted = useMemo(() => {
-        return formats_audio.sort((a, b) => {
+        return audioFormats.sort((a, b) => {
             if (
-                a.format_note?.includes('original') &&
-                !b.format_note?.includes('original')
+                a.formatNote?.includes('original') &&
+                !b.formatNote?.includes('original')
             )
                 return -1
             if (
-                !a.format_note?.includes('original') &&
-                b.format_note?.includes('original')
+                !a.formatNote?.includes('original') &&
+                b.formatNote?.includes('original')
             )
                 return 1
             if (!a.filesize || !b.filesize) return 0
             return b.filesize - a.filesize
         })
-    }, [formats_audio])
+    }, [audioFormats])
 
     const getFormatLabel = (format: FormatOption) => {
         if (format.resolution) {
@@ -135,11 +134,6 @@ export default function FormatSelector({
                                 <FileAudio className="h-4 w-4" />
                             )}
                             {getFormatLabel(selectedFormat)}
-                            {selectedFormat.filesize && (
-                                <span className="text-muted-foreground text-xs">
-                                    {formatFileSize(selectedFormat.filesize)}
-                                </span>
-                            )}
                         </span>
                     ) : (
                         formatDictionary[locale].format
@@ -159,7 +153,7 @@ export default function FormatSelector({
                         <DropdownMenuGroup>
                             {videoFormatsSorted.map((format) => (
                                 <DropdownMenuItem
-                                    key={format.format_id}
+                                    key={format.formatId}
                                     onClick={() => {
                                         onSelect(format)
                                     }}
@@ -174,15 +168,8 @@ export default function FormatSelector({
                                         )}
                                     </span>
                                     <div className="flex gap-1">
-                                        {format.filesize && (
-                                            <span className="text-muted-foreground text-xs">
-                                                {formatFileSize(
-                                                    format.filesize
-                                                )}
-                                            </span>
-                                        )}
-                                        {selectedFormat?.format_id ===
-                                            format.format_id && (
+                                        {selectedFormat?.formatId ===
+                                            format.formatId && (
                                             <Check className="h-4 w-4 ml-2" />
                                         )}
                                     </div>
@@ -192,7 +179,7 @@ export default function FormatSelector({
                     </>
                 )}
 
-                {formats_audio.length > 0 && formats_video.length > 0 && (
+                {audioFormats.length > 0 && videoFormats.length > 0 && (
                     <DropdownMenuSeparator />
                 )}
 
@@ -207,7 +194,7 @@ export default function FormatSelector({
                         <DropdownMenuGroup>
                             {audioFormatsSorted.map((format) => (
                                 <DropdownMenuItem
-                                    key={format.format_id}
+                                    key={format.formatId}
                                     onClick={() => {
                                         onSelect(format)
                                     }}
@@ -215,15 +202,8 @@ export default function FormatSelector({
                                 >
                                     {getFormatLabel(format)}
                                     <div className="flex gap-1">
-                                        {format.filesize && (
-                                            <span className="text-muted-foreground text-xs">
-                                                {formatFileSize(
-                                                    format.filesize
-                                                )}
-                                            </span>
-                                        )}
-                                        {selectedFormat?.format_id ===
-                                            format.format_id && (
+                                        {selectedFormat?.formatId ===
+                                            format.formatId && (
                                             <Check className="h-4 w-4 ml-2" />
                                         )}
                                     </div>

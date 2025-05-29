@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router'
 import { useLocale } from '@/hooks/locale'
 import FormatSelector from './format-selector'
 import type { Format } from '@/lib/schemas/job'
+import DownloadButton from './download-button'
 
 const downloaderDictionary = {
     'en-US': {
@@ -66,7 +67,7 @@ export default function Downloader({ setPageError }: DownloaderProps) {
             )
         }
     }
-    const { data: jobs, isLoading } = useJobs(requestId)
+    const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
 
     const canDownloadCount = (jobs || []).filter(
         (job) => job.status === 'ready'
@@ -75,20 +76,15 @@ export default function Downloader({ setPageError }: DownloaderProps) {
         (job) => job.status === 'error'
     ).length
 
-    if (!jobs) return null
-
     // Cria uma lista de todos os formatos presentes em todos os jobs (interseção)
     const commonFormats = useMemo(() => {
-        const formats = jobs.map((job) => [
-            ...(job.json?.formats_audio || []),
-            ...(job.json?.formats_video || []),
-        ])
-        if (formats.length === 0) return []
+        const formats = jobs?.map((job) => job.formats || [])
+        if (!formats || formats.length === 0) return []
 
         return formats
             .reduce((acc, list) => {
-                const idsInList = new Set(list.map((f) => f.format_id))
-                return acc.filter((f) => idsInList.has(f.format_id))
+                const idsInList = new Set(list.map((f) => f.formatId))
+                return acc.filter((f) => idsInList.has(f.formatId))
             })
             .map((f) => {
                 const { filesize, ...format } = f
@@ -96,38 +92,34 @@ export default function Downloader({ setPageError }: DownloaderProps) {
             })
     }, [jobs])
 
+    if (!jobs) return null
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-4 mt-4">
                 <div className="flex items-center justify-center sm:justify-start w-full space-x-1">
                     <FormatSelector
-                        disabled={isLoading || !commonFormats.length}
+                        disabled={isLoadingJobs || !commonFormats.length}
                         selectedFormat={
                             commonFormats.find(
-                                (f) => f.format_id === selectedFormat
+                                (f) => f.formatId === selectedFormat
                             ) || undefined
                         }
                         onSelect={(format) => {
-                            setSelectedFormat(format.format_id)
+                            setSelectedFormat(format.formatId)
                         }}
                         formatOptions={commonFormats}
                     />
-                    {canDownloadCount > 0 && selectedFormat ? (
-                        <Button asChild size="lg" variant="default">
-                            <a
-                                download
-                                href={`${BASE_URL}/api/jobs/download/batch?formatId=${selectedFormat}&requestId=${requestId}`}
-                            >
-                                <DownloadIcon className="mr-2 h-3 w-3" />
-                                {`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
-                            </a>
-                        </Button>
-                    ) : (
-                        <Button disabled size="lg" variant="default">
-                            <DownloadIcon className="mr-2 h-3 w-3" />
-                            {`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
-                        </Button>
-                    )}
+                    <DownloadButton
+                        disabled={
+                            isLoadingJobs ||
+                            canDownloadCount === 0 ||
+                            !selectedFormat
+                        }
+                        description={`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
+                        downloadLink={`${BASE_URL}/api/jobs/download/batch?formatId=${selectedFormat}&requestId=${requestId}`}
+                    />
+
                     {failedJobsCount > 0 && (
                         <Button
                             variant="outline"
@@ -152,7 +144,7 @@ export default function Downloader({ setPageError }: DownloaderProps) {
             </div>
             <LinksTable
                 data={jobs || []}
-                isLoading={isLoading}
+                isLoading={isLoadingJobs}
                 onRetry={handleRetry}
                 onRemoveJob={handleRemoveJob}
                 isRetrying={retryingJobs}
