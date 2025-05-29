@@ -7,15 +7,5 @@ services:
             POSTGRES_DB: my-local-db
         ports:
             - '5328:5432'
-    localstack:
-        image: localstack/localstack:latest
-        ports:
-            - "4566:4566"
-        environment:
-            - SERVICES=sqs,lambda,cloudformation,ssm,logs,iam,ecr
-            - DEBUG=1
-            - DOCKER_HOST=unix:///var/run/docker.sock
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
 volumes:
     postgres_data:

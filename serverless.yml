@@ -1,45 +1,33 @@
 org: matheuspimentel
 service: sqs-worker
-plugins:
-  - serverless-localstack
 
 provider:
-  name: aws
-  region: us-east-1
-  timeout: 60
-  ecr:
-    images:
-      sqs-worker-image:
-        path: .
-        file: Dockerfile.lambda
+    name: aws
+    region: us-east-1
+    timeout: 60
+    ecr:
+        images:
+            sqs-worker-image:
+                path: .
+                file: Dockerfile.lambda
 
-  environment:
-    DATABASE_URL: ${env:DATABASE_URL}
+    environment:
+        DATABASE_URL: ${env:DATABASE_URL}
 
 functions:
-  processQueuePython:
-    image:
-      name: sqs-worker-image
-    events:
-      - sqs:
-          arn:
-            Fn::GetAtt:
-              - JobsQueue
-              - Arn
-
-custom:
-  localstack:
-    stages:
-      - local
-    host: http://localhost
-    edgePort: 4566
-    autostart: false
-    lambda:
-      mountCode: true
+    processQueuePython:
+        image:
+            name: sqs-worker-image
+        events:
+            - sqs:
+                  arn:
+                      Fn::GetAtt:
+                          - JobsQueue
+                          - Arn
 
 resources:
-  Resources:
-    JobsQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: JobsQueue
+    Resources:
+        JobsQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: JobsQueue
