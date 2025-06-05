@@ -13,6 +13,6 @@ npm run build
 
 echo "Deploying..."
 npx serverless deploy --verbose
-aws s3 sync $BUILD_DIR s3://$S3_FILES_BUCKET --delete
+aws s3 sync $BUILD_DIR s3://$S3_STATIC_BUCKET --delete
 
 echo "Deployment complete!"
