@@ -25,7 +25,7 @@ export const app = express()
 app.use(bodyParser.json())
 app.use((_, __, next) => DatabaseContext.run(db, next))
 
-app.use(apiRouter)
+app.use('/api', apiRouter)
 
 app.use(
     createRequestHandler({
