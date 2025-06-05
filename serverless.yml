@@ -13,7 +13,7 @@ provider:
         images:
             sqs-worker-image:
                 path: .
-                file: Dockerfile.lambda
+                file: Dockerfile
     environment:
         DATABASE_URL: ${env:DATABASE_URL}
         S3_FILES_BUCKET: ${env:S3_FILES_BUCKET}

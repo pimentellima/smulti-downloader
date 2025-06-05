@@ -9,10 +9,6 @@
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
         "strict": true,
-        "noEmit": true,
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["app/*"]
-        }
+        "noEmit": true
     }
 }

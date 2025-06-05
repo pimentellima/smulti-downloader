@@ -6,7 +6,7 @@
         "build": "vite build  --outDir build/client && vite build --ssr --outDir build/server",
         "db:generate": "dotenv -- drizzle-kit generate",
         "db:migrate": "dotenv -- drizzle-kit migrate",
-        "dev": "dotenv -- node server.js",
+        "dev": "dotenv -- node dev-server.js",
         "typecheck": "react-router typegen && tsc -b"
     },
     "dependencies": {

@@ -2,7 +2,6 @@ import os
 import yt_dlp 
 import psycopg2
 from psycopg2.extras import DictCursor
-import json
 import shutil
 
 BASE_DIR = os.path.dirname(__file__)
