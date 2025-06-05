@@ -1,13 +1,18 @@
 #!/bin/bash
 
-set -e  # para parar em caso de erro
+set -e 
 
-# opcional: limpar cache ou preparar variáveis
-echo "Iniciando deploy..."
+export $(grep -v '^#' .env | xargs)
+BUILD_DIR=build/client 
 
-# opcional: instalar dependências (por segurança)
-## npm install
+echo "Installing dependencies..."
+npm ci
 
-npx serverless deploy
+echo "Building..."
+npm run build
 
-echo "Deploy finalizado."
+echo "Deploying..."
+npx serverless deploy --verbose
+aws s3 sync $BUILD_DIR s3://$S3_FILES_BUCKET --delete
+
+echo "Deployment complete!"

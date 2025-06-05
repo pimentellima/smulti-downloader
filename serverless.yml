@@ -1,33 +1,210 @@
-org: matheuspimentel
-service: sqs-worker
+service: smulti-app
+
+package:
+    individually: true
 
 provider:
     name: aws
+    runtime: nodejs20.x
     region: us-east-1
-    timeout: 60
+    memorySize: 512
+    stage: dev
     ecr:
         images:
             sqs-worker-image:
                 path: .
                 file: Dockerfile.lambda
-
     environment:
         DATABASE_URL: ${env:DATABASE_URL}
+        S3_FILES_BUCKET: ${env:S3_FILES_BUCKET}
+
+        NODE_OPTIONS: '--enable-source-maps'
 
 functions:
-    processQueuePython:
+    processSqsMessage:
         image:
             name: sqs-worker-image
         events:
             - sqs:
-                  arn:
-                      Fn::GetAtt:
-                          - JobsQueue
-                          - Arn
+                  arn: !GetAtt JobsQueue.Arn
+    ssr:
+        handler: build/server/index.handler
+        events:
+            - httpApi:
+                  path: /{proxy+}
+                  method: '*'
+    api:
+        handler: handlers/api-handler.handler
+        events:
+            - httpApi:
+                  path: /api/{proxy+}
+                  method: '*'
+            - httpApi:
+                  path: /api
+                  method: '*'
+        environment:
+            SQS_QUEUE_NAME: ${env:SQS_QUEUE_NAME}
+plugins:
+    - serverless-esbuild
+
+build:
+    esbuild: false
+
+custom:
+    esbuild:
+        bundle: true
+        minify: false
+        sourcemap: true
+        target: es2020
+        format: cjs
+
+outputs:
+    WebsiteBucketName:
+        Value: !Ref WebsiteBucket
+    DistributionID:
+        Value: !Ref CDN
+    WebsiteDomain:
+        Value: !GetAtt CDN.DomainName
 
 resources:
     Resources:
         JobsQueue:
             Type: AWS::SQS::Queue
             Properties:
-                QueueName: JobsQueue
+                QueueName: ${env:SQS_QUEUE_NAME}
+        CDN:
+            Type: AWS::CloudFront::Distribution
+            DependsOn:
+                - WebsiteBucket
+                - HttpApi
+            Properties:
+                DistributionConfig:
+                    Origins:
+                        - DomainName: !GetAtt WebsiteBucket.DomainName
+                          Id: StaticOrigin
+                          S3OriginConfig:
+                              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${WebsiteOriginAccessIdentity}'
+
+                        - DomainName: !Sub '${HttpApi}.execute-api.${self:provider.region}.amazonaws.com'
+                          Id: WebsiteOrigin
+                          CustomOriginConfig:
+                              OriginProtocolPolicy: https-only
+                              OriginSSLProtocols: [TLSv1.2]
+
+                    DefaultCacheBehavior:
+                        AllowedMethods:
+                            [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+                        CachedMethods: [GET, HEAD, OPTIONS]
+                        Compress: true
+                        CachePolicyId: !Ref CachePolicy
+                        TargetOriginId: WebsiteOrigin
+                        ViewerProtocolPolicy: redirect-to-https
+
+                    CacheBehaviors:
+                        - PathPattern: 'assets/*'
+                          AllowedMethods:
+                              - GET
+                              - HEAD
+                          CachedMethods:
+                              - GET
+                              - HEAD
+                          Compress: true
+                          ForwardedValues:
+                              QueryString: true
+                              Cookies:
+                                  Forward: none
+                          TargetOriginId: StaticOrigin
+                          ViewerProtocolPolicy: redirect-to-https
+
+                        - PathPattern: '/favicon.*'
+                          AllowedMethods:
+                              - GET
+                              - HEAD
+                          CachedMethods:
+                              - GET
+                              - HEAD
+                          Compress: false
+                          ForwardedValues:
+                              QueryString: false
+                              Cookies:
+                                  Forward: none
+                          TargetOriginId: StaticOrigin
+                          ViewerProtocolPolicy: redirect-to-https
+
+                    Comment: ${self:service}-${self:provider.stage}
+                    Enabled: true
+                    HttpVersion: http2
+                    PriceClass: PriceClass_100
+                    ViewerCertificate:
+                        CloudFrontDefaultCertificate: true
+
+        CachePolicy:
+            Type: AWS::CloudFront::CachePolicy
+            Properties:
+                CachePolicyConfig:
+                    Name: CachePolicy
+                    DefaultTTL: 60
+                    MinTTL: 0
+                    MaxTTL: 60
+                    ParametersInCacheKeyAndForwardedToOrigin:
+                        HeadersConfig:
+                            HeaderBehavior: whitelist
+                            Headers:
+                                - Accept-Language
+                        EnableAcceptEncodingGzip: true
+                        QueryStringsConfig:
+                            QueryStringBehavior: all
+                        CookiesConfig:
+                            CookieBehavior: all
+
+        WebsiteOriginAccessIdentity:
+            Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+            Properties:
+                CloudFrontOriginAccessIdentityConfig:
+                    Comment: Origin Access Identity to Access ${self:service} Website Bucket ${self:provider.stage}
+
+        WebsiteBucket:
+            Type: AWS::S3::Bucket
+            Properties: {}
+
+        WebsiteBucketPolicy:
+            Type: AWS::S3::BucketPolicy
+            Properties:
+                Bucket: !Ref WebsiteBucket
+                PolicyDocument:
+                    Statement:
+                        - Effect: Allow
+                          Action:
+                              - s3:GetObject
+                          Resource: !Sub '${WebsiteBucket.Arn}/*'
+                          Principal:
+                              CanonicalUser: !GetAtt WebsiteOriginAccessIdentity.S3CanonicalUserId
+
+        PublicFilesBucket:
+            Type: AWS::S3::Bucket
+            Properties:
+                BucketName: ${env:S3_FILES_BUCKET}
+                PublicAccessBlockConfiguration:
+                    BlockPublicAcls: false
+                    BlockPublicPolicy: false
+                    IgnorePublicAcls: false
+                    RestrictPublicBuckets: false
+
+        PublicFilesBucketPolicy:
+            Type: AWS::S3::BucketPolicy
+            Properties:
+                Bucket: !Ref PublicFilesBucket
+                PolicyDocument:
+                    Statement:
+                        - Sid: PublicReadGetObject
+                          Effect: Allow
+                          Principal: '*'
+                          Action:
+                              - s3:GetObject
+                          Resource: !Sub '${PublicFilesBucket.Arn}/*'
+                        - Sid: PublicListBucket
+                          Effect: Allow
+                          Principal: '*'
+                          Action:
+                              - s3:ListBucket
+                          Resource: !GetAtt PublicFilesBucket.Arn

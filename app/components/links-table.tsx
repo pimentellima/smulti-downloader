@@ -8,8 +8,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { BASE_URL } from '@/lib/constants'
+import { useLocale } from '@/hooks/locale'
 import type { Job } from '@/lib/api'
+import { BASE_URL } from '@/lib/constants'
 import {
     flexRender,
     getCoreRowModel,
@@ -20,17 +21,13 @@ import {
 import {
     ChevronLeft,
     ChevronRight,
-    Download,
     Loader2,
     RefreshCw,
-    XIcon,
+    XIcon
 } from 'lucide-react'
-import { useLocale } from '@/hooks/locale'
-import FormatSelector, { type FormatOption } from './format-selector'
-import { jobs } from '~/database/schema'
 import { useMemo, useState } from 'react'
-import type { Format } from '@/lib/schemas/job'
 import DownloadButton from './download-button'
+import FormatSelector, { type FormatOption } from './format-selector'
 
 type JobFormatInfo = {
     jobId: string
@@ -194,7 +191,7 @@ export function LinksTable({
                                 <DownloadButton
                                     size={'icon'}
                                     variant={'outline'}
-                                    downloadLink={`${BASE_URL}/api/download/single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
+                                    downloadLink={`${BASE_URL}api//single?formatId=${formatInfo?.formatId}&jobId=${job.id}`}
                                     disabled={
                                         job.status !== 'ready' ||
                                         !formatInfo?.formatId

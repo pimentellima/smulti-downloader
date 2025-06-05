@@ -1,15 +1,11 @@
-import errorMiddleware from '@/api/middleware/error-middleware'
-import languageMiddleware from '@/api/middleware/language-middleware'
-import downloadRoute from '@/api/routes/download/route'
-import jobsRoute from '@/api/routes/jobs/route'
 import { createRequestHandler } from '@react-router/express'
-import bodyParser from 'body-parser'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import express from 'express'
 import postgres from 'postgres'
-import 'react-router'
 import { DatabaseContext } from '../database/context'
 import * as schema from '../database/schema'
+import morgan from 'morgan'
+import languageMiddleware from '@/api/middleware/language-middleware'
 
 declare module 'react-router' {
     interface AppLoadContext {
@@ -17,17 +13,14 @@ declare module 'react-router' {
     }
 }
 
+export const app = express()
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required')
+
 const client = postgres(process.env.DATABASE_URL)
 const db = drizzle(client, { schema })
-
-export const app = express()
-
-app.use(bodyParser.json())
+app.use(morgan('tiny'))
 app.use((_, __, next) => DatabaseContext.run(db, next))
-
-app.use('/api/jobs', jobsRoute)
-app.use('/downloads', downloadRoute)
+app.use(languageMiddleware)
 
 app.use(
     createRequestHandler({
@@ -39,6 +32,3 @@ app.use(
         },
     })
 )
-app.use(languageMiddleware)
-
-app.use(errorMiddleware)

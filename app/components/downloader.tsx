@@ -116,7 +116,7 @@ export default function Downloader({ setPageError }: DownloaderProps) {
                             !selectedFormat
                         }
                         description={`${downloaderDictionary[locale].downloadAll} (${canDownloadCount})`}
-                        downloadLink={`${BASE_URL}/api/download/batch?formatId=${selectedFormat}&requestId=${requestId}`}
+                        downloadLink={`${BASE_URL}/api/downloads/batch?formatId=${selectedFormat}&requestId=${requestId}`}
                     />
 
                     {failedJobsCount > 0 && (

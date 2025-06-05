@@ -7,7 +7,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     build: {
         rollupOptions: isSsrBuild
             ? {
-                  input: './server/app.ts',
+                  input: './handlers/ssr-handler.ts',
               }
             : undefined,
     },

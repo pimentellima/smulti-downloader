@@ -1,6 +1,6 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { z } from 'zod'
-import { formats, jobStatusEnum } from '~/database/schema'
+import { formats, jobStatusEnum } from '../../../database/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),

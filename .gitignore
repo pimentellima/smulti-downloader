@@ -11,3 +11,4 @@
 .serverless/
 cookies.txt
 *.Zone.Identifier
+.esbuild
