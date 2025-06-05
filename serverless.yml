@@ -165,7 +165,8 @@ resources:
 
         WebsiteBucket:
             Type: AWS::S3::Bucket
-            Properties: {}
+            Properties: 
+                BucketName: ${env:S3_STATIC_BUCKET}
 
         WebsiteBucketPolicy:
             Type: AWS::S3::BucketPolicy
@@ -180,7 +181,7 @@ resources:
                           Principal:
                               CanonicalUser: !GetAtt WebsiteOriginAccessIdentity.S3CanonicalUserId
 
-        PublicFilesBucket:
+        PublicStaticBucket:
             Type: AWS::S3::Bucket
             Properties:
                 BucketName: ${env:S3_FILES_BUCKET}
@@ -190,10 +191,10 @@ resources:
                     IgnorePublicAcls: false
                     RestrictPublicBuckets: false
 
-        PublicFilesBucketPolicy:
+        PublicStaticBucketPolicy:
             Type: AWS::S3::BucketPolicy
             Properties:
-                Bucket: !Ref PublicFilesBucket
+                Bucket: !Ref PublicStaticBucket
                 PolicyDocument:
                     Statement:
                         - Sid: PublicReadGetObject
@@ -201,10 +202,10 @@ resources:
                           Principal: '*'
                           Action:
                               - s3:GetObject
-                          Resource: !Sub '${PublicFilesBucket.Arn}/*'
+                          Resource: !Sub '${PublicStaticBucket.Arn}/*'
                         - Sid: PublicListBucket
                           Effect: Allow
                           Principal: '*'
                           Action:
                               - s3:ListBucket
-                          Resource: !GetAtt PublicFilesBucket.Arn
+                          Resource: !GetAtt PublicStaticBucket.Arn
