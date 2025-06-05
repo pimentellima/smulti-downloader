@@ -79,6 +79,10 @@ resources:
                 - HttpApi
             Properties:
                 DistributionConfig:
+                    Aliases:
+                        - www.smultidownloader.com
+                        - smultidownloader.com
+
                     Origins:
                         - DomainName: !GetAtt WebsiteBucket.DomainName
                           Id: StaticOrigin
@@ -135,8 +139,11 @@ resources:
                     Enabled: true
                     HttpVersion: http2
                     PriceClass: PriceClass_100
+
                     ViewerCertificate:
-                        CloudFrontDefaultCertificate: true
+                        AcmCertificateArn: arn:aws:acm:us-east-1:412381757672:certificate/45c6aeed-50ae-4a67-9c0f-3bc6825e1fd0
+                        SslSupportMethod: sni-only
+                        MinimumProtocolVersion: TLSv1.2_2021
 
         CachePolicy:
             Type: AWS::CloudFront::CachePolicy
