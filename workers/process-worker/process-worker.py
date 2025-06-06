@@ -56,49 +56,6 @@ def extract_job_info(video_url):
         "formats": formats
     }
 
-def insert_job(conn, job_id):
-    with conn.cursor(cursor_factory=DictCursor) as cur:
-        # Buscar o job
-        cur.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
-        job = cur.fetchone()
-        
-        if not job:
-            print(f"Job ID {job_id} não encontrado no banco de dados")
-            return
-                
-        video_url = job["url"]
-        job_data = extract_job_info(video_url)
-        
-        # Atualizar o job com título e status
-        cur.execute(
-            "UPDATE jobs SET title = %s, status = %s WHERE id = %s",
-            (job_data["title"], 'ready', job_id)
-        )
-        
-        # Inserir os formatos na tabela formats
-        for format_data in job_data["formats"]:
-            cur.execute("""
-                INSERT INTO formats (
-                    format_id, job_id, ext, resolution, acodec, vcodec, 
-                    filesize, tbr, url, language, format_note
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                format_data["format_id"],
-                job_id,
-                format_data["ext"],
-                format_data["resolution"],
-                format_data["acodec"],
-                format_data["vcodec"],
-                format_data["filesize"],
-                format_data["tbr"],
-                format_data["url"],
-                format_data["language"],
-                format_data["format_note"]
-            ))
-            
-    conn.commit()
-    print(f"Job {job_id} processado com sucesso. Título: {job_data['title']}")
-
 def lambda_handler(event, context=None):
     db_connection_string = os.environ.get('DATABASE_URL')
     
@@ -109,7 +66,48 @@ def lambda_handler(event, context=None):
         conn = None
         try:
             conn = psycopg2.connect(db_connection_string)
-            insert_job(conn, job_id)
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
+                job = cur.fetchone()
+                
+                if not job:
+                    print(f"Job ID {job_id} não encontrado no banco de dados")
+                    return
+                        
+                video_url = job["url"]
+                job_data = extract_job_info(video_url)
+                
+                cur.execute(
+                    "UPDATE jobs SET title = %s, status = %s WHERE id = %s",
+                    (job_data["title"], 'ready', job_id)
+                )
+                
+                for format_data in job_data["formats"]:
+                    cur.execute("""
+                        INSERT INTO formats (
+                            format_id, job_id, ext, resolution, acodec, vcodec, 
+                            filesize, tbr, url, language, format_note
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        format_data["format_id"],
+                        job_id,
+                        format_data["ext"],
+                        format_data["resolution"],
+                        format_data["acodec"],
+                        format_data["vcodec"],
+                        format_data["filesize"],
+                        format_data["tbr"],
+                        format_data["url"],
+                        format_data["language"],
+                        format_data["format_note"]
+                    ))
+                    
+                cur.execute(
+                    "UPDATE jobs SET status = %s WHERE id = %s",
+                    ('finished-processing', job_id)
+                )
+            conn.commit()
+            print(f"Job {job_id} processado com sucesso. Título: {job_data['title']}")
             
         except Exception as e:
             print("Erro ao processar job:", e)

@@ -11,8 +11,8 @@ provider:
     stage: dev
     ecr:
         images:
-            sqs-worker-image:
-                path: .
+            process-worker-image:
+                path: ./workers/process-worker
                 file: Dockerfile
     environment:
         DATABASE_URL: ${env:DATABASE_URL}
@@ -23,10 +23,11 @@ provider:
 functions:
     processSqsMessage:
         image:
-            name: sqs-worker-image
+            name: process-worker-image
         events:
             - sqs:
                   arn: !GetAtt JobsQueue.Arn
+    
     ssr:
         handler: build/server/index.handler
         events:
@@ -172,7 +173,7 @@ resources:
 
         WebsiteBucket:
             Type: AWS::S3::Bucket
-            Properties: 
+            Properties:
                 BucketName: ${env:S3_STATIC_BUCKET}
 
         WebsiteBucketPolicy:

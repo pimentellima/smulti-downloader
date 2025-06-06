@@ -4,12 +4,9 @@ import {
     getJobsByRequestId,
     retryJobsByIds,
     retryJobsByRequestId,
-    updateJob
+    updateJob,
 } from '@/lib/api'
-import {
-    createJobsSchema,
-    retryJobsSchema
-} from '@/lib/schemas/job'
+import { createJobsSchema, retryJobsSchema } from '@/lib/schemas/job'
 import { addJobToSqsQueue } from '@/lib/sqs'
 import { Router } from 'express'
 import { z } from 'zod'
@@ -47,10 +44,9 @@ jobsRoute.post('/', async (req, res, next) => {
 
         for (const job of jobs) {
             try {
-                const response = await addJobToSqsQueue(job.id)
+                await addJobToSqsQueue(job.id)
             } catch (err) {
                 await updateJob(job.id, { status: 'error' })
-                throw err
             }
         }
         res.status(200).json({ requestId })

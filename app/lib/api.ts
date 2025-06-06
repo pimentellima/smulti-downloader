@@ -82,8 +82,11 @@ export async function createRequest() {
     return request
 }
 
-export async function createJobs(jobs: InferInsertModel<typeof schema.jobs>[]) {
-    const db = database()
+export async function createJobs(
+    jobs: InferInsertModel<typeof schema.jobs>[],
+    tx?: DatabaseType
+) {
+    const db = tx || database()
 
     return await db.insert(schema.jobs).values(jobs).returning()
 }
