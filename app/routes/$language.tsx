@@ -73,13 +73,13 @@ export default function HomePage() {
     const [pageError, setPageError] = useState<string | undefined>()
 
     return (
-        <main className="bg-card min-h-screen">
+        <main className="bg-card">
             <div className="flex gap-1 absolute right-1/2 translate-x-1/2 top-2 z-10">
                 <DonateButton locale={locale} />
                 <LanguageSelector />
             </div>
-            <section className="container bg-gradient mx-auto py-24 px-4 scroll-mt-16">
-                <Card className="max-w-5xl mx-auto bg-background text-foreground">
+            <section className="h-[70vh] flex w-full justify-center items-center bg-gradient-to-r from-[#2e2727] to-[#af2c39] mx-auto py-24 px-4 scroll-mt-16">
+                <Card className="w-5xl mx-auto bg-background text-foreground">
                     <CardHeader>
                         <CardTitle className="text-center text-2xl md:text-3xl font-bold">
                             {dictionary.hero.title}
