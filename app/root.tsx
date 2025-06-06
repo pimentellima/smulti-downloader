@@ -7,10 +7,7 @@ import {
     ScrollRestoration,
 } from 'react-router'
 
-import {
-    QueryClient,
-    QueryClientProvider
-} from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { Route } from './+types/root'
 import './app.css'
 
@@ -31,6 +28,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
             <head>
+                <link
+                    href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap"
+                    rel="stylesheet"
+                />
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"
