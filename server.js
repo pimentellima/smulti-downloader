@@ -17,7 +17,7 @@ const viteDevServer = await import('vite').then((vite) =>
 app.use(viteDevServer.middlewares)
 app.use(async (req, res, next) => {
     try {
-        const source = await viteDevServer.ssrLoadModule('./server/app.dev.ts')
+        const source = await viteDevServer.ssrLoadModule('./server/app.ts')
         return await source.app(req, res, next)
     } catch (error) {
         if (typeof error === 'object' && error instanceof Error) {
