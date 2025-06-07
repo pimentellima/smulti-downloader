@@ -10,6 +10,7 @@ npm ci
 
 echo "Building..."
 npm run build
+npm run build:process-worker
 
 echo "Deploying..."
 npx serverless deploy --verbose

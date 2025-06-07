@@ -29,6 +29,15 @@ export const jobs = pgTable('jobs', {
     title: text('title'),
 })
 
+export const downloadLinks = pgTable('download_links', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    jobId: uuid('job_id')
+        .references(() => jobs.id, { onDelete: 'cascade' })
+        .notNull(),
+    formatId: text('format_id').notNull(),
+    url: text('url').notNull(),
+})
+
 export const formats = pgTable('formats', {
     id: uuid('id').primaryKey().defaultRandom(),
     formatId: text('format_id').notNull(),
@@ -49,18 +58,22 @@ export const formats = pgTable('formats', {
     createdAt: timestamp('created_at').defaultNow(),
 })
 
-export const requestDownloadUrl = pgTable('request_download_urls', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    requestId: uuid('request_id')
-        .references(() => requests.id, { onDelete: 'cascade' })
-        .notNull(),
-    formatId: text('format_id').notNull(),
-    downloadUrl: text('download_url').notNull(),
-    downloadUrlExpiresAt: timestamp('download_url_expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow(),
-}, (table) => ({
-    uniqueRequestFormat: unique().on(table.requestId, table.formatId),
-}))
+export const requestDownloadUrl = pgTable(
+    'request_download_urls',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        requestId: uuid('request_id')
+            .references(() => requests.id, { onDelete: 'cascade' })
+            .notNull(),
+        formatId: text('format_id').notNull(),
+        downloadUrl: text('download_url').notNull(),
+        downloadUrlExpiresAt: timestamp('download_url_expires_at').notNull(),
+        createdAt: timestamp('created_at').defaultNow(),
+    },
+    (table) => ({
+        uniqueRequestFormat: unique().on(table.requestId, table.formatId),
+    })
+)
 
 export const requests = pgTable('requests', {
     id: uuid('id').primaryKey().defaultRandom(),

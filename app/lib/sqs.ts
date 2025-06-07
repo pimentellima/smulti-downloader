@@ -17,13 +17,13 @@ const client = new SQSClient({
             : undefined, */
 })
 
-const sqsQueueName = process.env.SQS_QUEUE_NAME!
+const sqsProcessQueueName = process.env.SQS_PROCESS_QUEUE_NAME!
 
 export async function addJobToSqsQueue(jobId: string) {
     try {
         const { QueueUrl } = await client.send(
             new GetQueueUrlCommand({
-                QueueName: sqsQueueName,
+                QueueName: sqsProcessQueueName,
             })
         )
 

@@ -11,8 +11,11 @@ provider:
     stage: dev
     ecr:
         images:
-            process-worker-image:
-                path: ./workers/process-worker
+            process-handler-image:
+                path: ./handlers/process-handler
+                file: Dockerfile
+            convert-handler-image:
+                path: ./handlers/convert-handler
                 file: Dockerfile
     environment:
         DATABASE_URL: ${env:DATABASE_URL}
@@ -21,12 +24,18 @@ provider:
         NODE_OPTIONS: '--enable-source-maps'
 
 functions:
-    processSqsMessage:
+    convert:
         image:
-            name: process-worker-image
+            name: convert-handler-image
         events:
             - sqs:
-                  arn: !GetAtt JobsQueue.Arn
+                  arn: !GetAtt ConvertQueue.Arn
+    process:
+        image:
+            name: process-handler-image
+        events:
+            - sqs:
+                  arn: !GetAtt ProcessQueue.Arn
     
     ssr:
         handler: build/server/index.handler
@@ -44,7 +53,8 @@ functions:
                   path: /api
                   method: '*'
         environment:
-            SQS_QUEUE_NAME: ${env:SQS_QUEUE_NAME}
+            SQS_CONVERT_QUEUE_NAME: ${env:SQS_CONVERT_QUEUE_NAME}
+            SQS_PROCESS_QUEUE_NAME: ${env:SQS_PROCESS_QUEUE_NAME}
 plugins:
     - serverless-esbuild
 
@@ -69,10 +79,14 @@ outputs:
 
 resources:
     Resources:
-        JobsQueue:
+        ConvertQueue:
             Type: AWS::SQS::Queue
             Properties:
-                QueueName: ${env:SQS_QUEUE_NAME}
+                QueueName: ${env:SQS_CONVERT_QUEUE_NAME}
+        ProcessQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: ${env:SQS_PROCESS_QUEUE_NAME}
         CDN:
             Type: AWS::CloudFront::Distribution
             DependsOn:

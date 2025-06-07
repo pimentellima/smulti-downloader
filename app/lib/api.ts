@@ -171,6 +171,25 @@ export const updateJobStatus = async (
     return job
 }
 
+export async function insertDownloadLink(
+    jobId: string,
+    formatId: string,
+    url: string
+) {
+    const db = database()
+
+    const [link] = await db
+        .insert(schema.downloadLinks)
+        .values({
+            jobId,
+            formatId,
+            url,
+        })
+        .returning()
+
+    return link
+}
+
 export async function createStreamForJobFormat(
     job: Job & { formats: Format[] },
     format: Format

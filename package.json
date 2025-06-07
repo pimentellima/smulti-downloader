@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build  --outDir build/client && vite build --ssr --outDir build/server",
+        "build:process-worker": "esbuild handlers/convert-handler/convert-handler.ts --bundle --minify=false --sourcemap --target=es2020 --format=cjs --platform=node --outfile=handlers/convert-handler/dist/handler.js",
         "db:generate": "dotenv -- drizzle-kit generate",
         "db:migrate": "dotenv -- drizzle-kit migrate",
         "dev": "dotenv -- node server.js",
