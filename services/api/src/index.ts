@@ -1,10 +1,9 @@
 import 'dotenv/config'
 import { app } from './app'
-
-const PORT = Number.parseInt(process.env.PORT || '5173')
+import { API_PORT } from '@utils/constants'
 
 console.log('Starting API development server')
 
-app.listen(PORT, () => {
-    console.log(`API server is running on http://localhost:${PORT}`)
+app.listen(API_PORT, () => {
+    console.log(`API server is running on http://localhost:${API_PORT}`)
 })

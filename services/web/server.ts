@@ -2,7 +2,7 @@ import 'dotenv/config'
 import compression from 'compression'
 import express from 'express'
 
-const PORT = Number.parseInt(process.env.PORT || '3000')
+const PORT = '5173'
 
 const app = express()
 

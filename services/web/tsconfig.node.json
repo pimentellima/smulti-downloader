@@ -1,5 +1,14 @@
 {
     "extends": "@smulti-downloader/tsconfig/base.json",
     "include": ["vite.config.ts", "react-router.config.ts"],
+    "compilerOptions": {
+        "composite": true,
+        "strict": true,
+        "types": ["node"],
+        "lib": ["ES2022"],
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "bundler"
+    },
     "exclude": ["dist", "build"]
 }
