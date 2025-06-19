@@ -77,7 +77,7 @@ export default function HomePage() {
                 <DonateButton locale={locale} />
                 <LanguageSelector />
             </div>
-            <section className="h-[65vh] flex w-full justify-center items-center bg-gradient-to-r from-[#2e2727] to-[#af2c39] mx-auto py-24 px-4 scroll-mt-16">
+            <section className="h-[75vh] flex w-full justify-center items-center bg-gradient-to-r from-[#2e2727] to-[#af2c39] mx-auto py-24 px-4 scroll-mt-16">
                 <Card className="w-5xl mx-auto bg-background text-foreground">
                     <CardHeader>
                         <CardTitle className="text-center text-2xl md:text-3xl font-bold">
