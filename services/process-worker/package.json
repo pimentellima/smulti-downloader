@@ -1,0 +1,8 @@
+{
+    "name": "@smulti-downloader/process-worker",
+    "private": true,
+    "type": "module",
+    "devDependencies": {
+        "serverless-python-requirements": "^6.1.2"
+    }
+}

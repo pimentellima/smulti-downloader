@@ -1,0 +1,35 @@
+{
+    "name": "@smulti-downloader/drizzle",
+    "type": "module",
+    "private": true,
+    "main": "./src/index.ts",
+    "module": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "build": "tsc",
+        "db:generate": "dotenv -- drizzle-kit generate",
+        "db:migrate": "dotenv -- drizzle-kit migrate",
+        "db:studio": "dotenv -- drizzle-kit studio",
+        "check-types": "tsc --noEmit",
+        "dev": "tsx watch -r tsconfig-paths/register src/index.ts"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./client": "./src/client.ts",
+        "./schema": "./src/schema.ts"
+    },
+    "dependencies": {
+        "drizzle-orm": "~0.36.3",
+        "postgres": "^3.4.5"
+    },
+    "devDependencies": {
+        "@smulti-downloader/tsconfig": "workspace:^",
+        "@types/node": "^20",
+        "@types/pg": "^8.11.14",
+        "dotenv": "^16.5.0",
+        "dotenv-cli": "^8.0.0",
+        "drizzle-kit": "~0.28.1",
+        "tsx": "^4.19.2",
+        "typescript": "^5.8.3"
+    }
+}

@@ -4,11 +4,14 @@
 *.tsbuildinfo
 
 # React Router
-/.react-router/
+.react-router/
 /build/
 
+dist/
 
 .serverless/
 cookies.txt
 *.Zone.Identifier
 .esbuild
+.turbo
+build/

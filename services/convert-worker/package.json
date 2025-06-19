@@ -1,0 +1,23 @@
+{
+    "name": "@smulti-downloader/convert-worker",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "check-types": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@smulti-downloader/utils": "workspace:^",
+        "@smulti-downloader/shared": "workspace:^",
+        "drizzle-orm": "^0.30.0",
+        "postgres": "^3.4.5",
+        "aws-lambda": "^1.0.7"
+    },
+    "devDependencies": {
+        "esbuild": "^0.21.1",
+        "@smulti-downloader/tsconfig": "workspace:^",
+        "typescript": "^5.8.3",
+        "@types/aws-lambda": "^8.10.114",
+        "@types/node": "^20.11.30"
+    }
+}

@@ -1,0 +1,33 @@
+import 'dotenv/config'
+import compression from 'compression'
+import express from 'express'
+
+const PORT = Number.parseInt(process.env.PORT || '3000')
+
+const app = express()
+
+app.use(compression())
+app.disable('x-powered-by')
+
+console.log('Starting SSR development server')
+const viteDevServer = await import('vite').then((vite) =>
+    vite.createServer({
+        server: { middlewareMode: true },
+    })
+)
+app.use(viteDevServer.middlewares)
+app.use(async (req, res, next) => {
+    try {
+        const source = await viteDevServer.ssrLoadModule('./app/server/app.ts')
+        return await source.app(req, res, next)
+    } catch (error) {
+        if (typeof error === 'object' && error instanceof Error) {
+            viteDevServer.ssrFixStacktrace(error)
+        }
+        next(error)
+    }
+})
+
+app.listen(PORT, () => {
+    console.log(`SSR server is running on http://localhost:${PORT}`)
+})

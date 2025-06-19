@@ -1,0 +1,44 @@
+{
+    "name": "@smulti-downloader/middleware",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "check-types": "tsc --noEmit",
+        "dev": "tsx watch -r tsconfig-paths/register src/index.ts"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./src/index.ts"
+        }
+    },
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "dependencies": {
+        "@smulti-downloader/drizzle": "workspace:^",
+        "@smulti-downloader/utils": "workspace:^",
+        "@smulti-downloader/shared": "workspace:^",
+        "@smulti-downloader/validations": "workspace:^",
+        "archiver": "^7.0.1",
+        "aws-lambda": "^1.0.7",
+        "express": "^5.1.0",
+        "serverless-cloudfront-invalidate": "^1.12.2",
+        "serverless-http": "^3.2.0",
+        "serverless-python-requirements": "^6.1.2"
+    },
+    "devDependencies": {
+        "@smulti-downloader/tsconfig": "workspace:^",
+        "@types/archiver": "^6.0.3",
+        "@types/express": "^5.0.1",
+        "@types/express-serve-static-core": "^5.0.6",
+        "@types/node": "^20",
+        "dotenv-cli": "^8.0.0",
+        "tsconfig-paths": "^4.2.0",
+        "tsx": "^4.19.2",
+        "drizzle-kit": "~0.28.1",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.8.3",
+        "vite": "^6.3.3",
+        "vite-tsconfig-paths": "^5.1.4"
+    }
+}

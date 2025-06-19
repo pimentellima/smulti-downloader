@@ -1,0 +1,9 @@
+{
+    "extends": "@smulti-downloader/tsconfig/react-library.json",
+    "include": [".react-router/types/**/*", "app/**/*", "server.ts"],
+    "compilerOptions": {
+        "rootDirs": [".", "./.react-router/types"],
+        "types": ["vite/client"]
+    },
+    "exclude": ["dist", "build"]
+}
