@@ -1,6 +1,6 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import { z } from 'zod'
-import { formats, jobStatusEnum } from '@drizzle/schema'
+import { formats, jobStatusEnum, mergedFormatsStatusEnum } from '@drizzle/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
@@ -10,14 +10,22 @@ export const createJobsSchema = z.object({
 export const statusSchema = z.enum(jobStatusEnum.enumValues)
 export type JobStatus = z.infer<typeof statusSchema>
 
+export const mergedFormatStatusSchema = z.enum(mergedFormatsStatusEnum.enumValues)
+export type ConvertFormatStatus = z.infer<typeof mergedFormatStatusSchema>
+
 export const downloadJobByRequestSchema = z.object({
     requestId: z.string().uuid(),
     formatId: z.string(),
 })
 
-export const downloadJobByIdSchema = z.object({
+export const jobFormatSchema = z.object({
     jobId: z.string().uuid(),
     formatId: z.string(),
+})
+
+export const convertSchema = z.object({
+    videoFormatId: z.string().uuid(),
+    audioFormatId: z.string().uuid(),
 })
 
 export const retryJobsSchema = z

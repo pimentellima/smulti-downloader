@@ -1,0 +1,104 @@
+service: smulti-convert-service
+
+provider:
+    name: aws
+    region: us-east-1
+    runtime: nodejs22.x
+    memorySize: 512
+    timeout: 30
+    stage: dev
+    environment:
+        DATABASE_URL: ${env:DATABASE_URL}
+        S3_FILES_BUCKET: ${env:S3_FILES_BUCKET}
+        SQS_CONVERT_QUEUE_NAME: ${env:SQS_CONVERT_QUEUE_NAME}
+        MEDIACONVERT_ROLE_ARN: !GetAtt MediaConvertRole.Arn
+        NODE_OPTIONS: '--enable-source-maps'
+    iam:
+        role:
+            statements:
+                - Effect: Allow
+                  Action:
+                      - mediaconvert:*
+                  Resource: '*'
+                - Effect: Allow
+                  Action:
+                      - s3:GetObject
+                      - s3:PutObject
+                  Resource:
+                      - arn:aws:s3:::${env:S3_FILES_BUCKET}/*
+                - Effect: Allow
+                  Action:
+                      - sqs:SendMessage
+                      - sqs:ReceiveMessage
+                      - sqs:DeleteMessage
+                      - sqs:GetQueueAttributes
+                  Resource:
+                      - !GetAtt PrepareConversionQueue.Arn
+                - Effect: Allow
+                  Action:
+                      - iam:PassRole
+                  Resource: !GetAtt MediaConvertRole.Arn
+
+functions:
+    prepareConversion:
+        handler: ./src/prepare-conversion.handler
+        events:
+            - sqs:
+                  arn: !GetAtt PrepareConversionQueue.Arn
+
+    updateJobStatus:
+        handler: ./src/update-job-status.handler
+        events:
+            - eventBridge:
+                  pattern:
+                      source:
+                          - aws.mediaconvert
+                      detail-type:
+                          - MediaConvert Job State Change
+                      detail:
+                          status:
+                              - COMPLETE
+                              - ERROR
+
+plugins:
+    - serverless-esbuild
+
+build:
+    esbuild: false
+
+custom:
+    esbuild:
+        bundle: true
+        minify: false
+        sourcemap: true
+        target: node22
+        format: cjs
+
+resources:
+    Resources:
+        PrepareConversionQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: ${env:SQS_CONVERT_QUEUE_NAME}
+
+        MediaConvertRole:
+            Type: AWS::IAM::Role
+            Properties:
+                AssumeRolePolicyDocument:
+                    Version: '2012-10-17'
+                    Statement:
+                        - Effect: Allow
+                          Principal:
+                              Service: mediaconvert.amazonaws.com
+                          Action: sts:AssumeRole
+                Policies:
+                    - PolicyName: MediaConvertS3Access
+                      PolicyDocument:
+                          Version: '2012-10-17'
+                          Statement:
+                              - Effect: Allow
+                                Action:
+                                    - s3:GetObject
+                                    - s3:PutObject
+                                Resource:
+                                    - arn:aws:s3:::${env:S3_FILES_BUCKET}/*

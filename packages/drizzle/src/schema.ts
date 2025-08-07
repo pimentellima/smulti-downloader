@@ -10,13 +10,20 @@ import {
 } from 'drizzle-orm/pg-core'
 
 export const jobStatusEnum = pgEnum('job_status', [
-    'queued',
-    'processing',
-    'error',
-    'ready',
-    'finished-processing',
-    'converting',
     'cancelled',
+    'error-processing',
+    'waiting-to-process',
+    'queued-processing',
+    'processing',
+    'finished-processing',
+])
+
+export const mergedFormatsStatusEnum = pgEnum('merged_formats_status', [
+    'waiting-to-convert',
+    'error-converting',
+    'queued-converting',
+    'converting',
+    'converted',
 ])
 
 export const jobs = pgTable('jobs', {
@@ -25,18 +32,36 @@ export const jobs = pgTable('jobs', {
         .references(() => requests.id, { onDelete: 'cascade' })
         .notNull(),
     url: text('url').notNull(),
-    status: jobStatusEnum('status').notNull().default('queued'),
+    status: jobStatusEnum('status').notNull(),
     title: text('title'),
 })
 
-export const downloadLinks = pgTable('download_links', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    jobId: uuid('job_id')
-        .references(() => jobs.id, { onDelete: 'cascade' })
-        .notNull(),
-    formatId: text('format_id').notNull(),
-    url: text('url').notNull(),
-})
+export const mergedFormats = pgTable(
+    'merged_formats',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        status: mergedFormatsStatusEnum('status').notNull(),
+        videoFormatId: uuid('video_format_id')
+            .references(() => formats.id, {
+                onDelete: 'cascade',
+            })
+            .notNull(),
+        audioFormatId: uuid('audio_format_id')
+            .references(() => formats.id, {
+                onDelete: 'cascade',
+            })
+            .notNull(),
+        jobId: uuid('job_id')
+            .references(() => jobs.id, {
+                onDelete: 'cascade',
+            })
+            .notNull(),
+        downloadUrl: text('download_url'),
+    },
+    (table) => ({
+        videoAudioUnique: unique().on(table.videoFormatId, table.audioFormatId),
+    }),
+)
 
 export const formats = pgTable('formats', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -51,29 +76,10 @@ export const formats = pgTable('formats', {
     filesize: integer('filesize'),
     tbr: text('tbr'),
     url: text('url').notNull(),
-    downloadUrl: text('download_url'),
-    downloadUrlExpiresAt: timestamp('download_url_expires_at'),
     language: text('language'),
     formatNote: text('format_note'),
     createdAt: timestamp('created_at').defaultNow(),
 })
-
-export const requestDownloadUrl = pgTable(
-    'request_download_urls',
-    {
-        id: uuid('id').primaryKey().defaultRandom(),
-        requestId: uuid('request_id')
-            .references(() => requests.id, { onDelete: 'cascade' })
-            .notNull(),
-        formatId: text('format_id').notNull(),
-        downloadUrl: text('download_url').notNull(),
-        downloadUrlExpiresAt: timestamp('download_url_expires_at').notNull(),
-        createdAt: timestamp('created_at').defaultNow(),
-    },
-    (table) => ({
-        uniqueRequestFormat: unique().on(table.requestId, table.formatId),
-    })
-)
 
 export const requests = pgTable('requests', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -94,13 +100,41 @@ export const users = pgTable('users', {
     createdAt: timestamp('created_at').defaultNow(),
 })
 
-export const jobRelations = relations(jobs, ({ many }) => ({
+export const jobRelations = relations(jobs, ({ many, one }) => ({
     formats: many(formats),
+    mergedFormats: many(mergedFormats),
+    request: one(requests, {
+        fields: [jobs.requestId],
+        references: [requests.id],
+    }),
 }))
 
 export const formatRelations = relations(formats, ({ one }) => ({
     job: one(jobs, {
         fields: [formats.jobId],
+        references: [jobs.id],
+    }),
+}))
+
+export const requestRelations = relations(requests, ({ many, one }) => ({
+    user: one(users, {
+        fields: [requests.userId],
+        references: [users.id],
+    }),
+    jobs: many(jobs),
+}))
+
+export const mergedVideoRelations = relations(mergedFormats, ({ one }) => ({
+    videoFormat: one(formats, {
+        fields: [mergedFormats.videoFormatId],
+        references: [formats.id],
+    }),
+    audioFormat: one(formats, {
+        fields: [mergedFormats.audioFormatId],
+        references: [formats.id],
+    }),
+    job: one(jobs, {
+        fields: [mergedFormats.jobId],
         references: [jobs.id],
     }),
 }))

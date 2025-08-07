@@ -31,7 +31,7 @@
         "tailwind-merge": "^3.3.0"
     },
     "devDependencies": {
-        "@smulti-downloader/tsconfig": "workspace:^",
+        "@smulti-downloader/tsconfig": "*",
         "@react-router/dev": "^7.5.3",
         "@tailwindcss/postcss": "^4.1.8",
         "@tailwindcss/vite": "^4.1.8",

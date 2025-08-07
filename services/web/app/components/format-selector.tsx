@@ -10,18 +10,26 @@ import {
 } from '@ui/components/dropdown-menu'
 import { useLocale } from '../hooks/locale'
 import { getLanguageLabel } from '../lib/language-labels'
-import { Check, ChevronDown, FileAudio, FileVideo } from 'lucide-react'
+import {
+    Check,
+    ChevronDown,
+    FileAudio,
+    FileVideo,
+    Loader2Icon,
+} from 'lucide-react'
 import { useMemo } from 'react'
+import { dictionary } from '../dictionaries/en-US'
 
 interface FormatSelectosProps {
     onSelect: (format: FormatOption) => void
     formatOptions: FormatOption[]
     selectedFormat: FormatOption | undefined
+    isLoadingFormats?: boolean
     disabled?: boolean
 }
 
 export interface FormatOption {
-    formatId: string
+    id: string
     ext: string
     resolution?: string | null
     acodec?: string | null
@@ -47,6 +55,7 @@ const formatDictionary = {
 export default function FormatSelector({
     formatOptions,
     onSelect,
+    isLoadingFormats = false,
     disabled,
     selectedFormat,
 }: FormatSelectosProps) {
@@ -154,7 +163,7 @@ export default function FormatSelector({
                         <DropdownMenuGroup>
                             {videoFormatsSorted.map((format) => (
                                 <DropdownMenuItem
-                                    key={format.formatId}
+                                    key={format.id}
                                     onClick={() => {
                                         onSelect(format)
                                     }}
@@ -169,8 +178,7 @@ export default function FormatSelector({
                                         )}
                                     </span>
                                     <div className="flex gap-1">
-                                        {selectedFormat?.formatId ===
-                                            format.formatId && (
+                                        {selectedFormat?.id === format.id && (
                                             <Check className="h-4 w-4 ml-2" />
                                         )}
                                     </div>
@@ -195,7 +203,7 @@ export default function FormatSelector({
                         <DropdownMenuGroup>
                             {audioFormatsSorted.map((format) => (
                                 <DropdownMenuItem
-                                    key={format.formatId}
+                                    key={format.id}
                                     onClick={() => {
                                         onSelect(format)
                                     }}
@@ -203,8 +211,7 @@ export default function FormatSelector({
                                 >
                                     {getFormatLabel(format)}
                                     <div className="flex gap-1">
-                                        {selectedFormat?.formatId ===
-                                            format.formatId && (
+                                        {selectedFormat?.id === format.id && (
                                             <Check className="h-4 w-4 ml-2" />
                                         )}
                                     </div>

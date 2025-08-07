@@ -1,0 +1,154 @@
+service: smulti-infra
+
+provider:
+    name: aws
+    region: us-east-1
+    runtime: nodejs18.x
+    stage: dev
+
+resources:
+    Resources:
+        # CDN:
+        #     Type: AWS::CloudFront::Distribution
+        #     DependsOn:
+        #         - WebsiteBucket
+        #         - HttpApi
+        #     Properties:
+        #         DistributionConfig:
+        #             Aliases:
+        #                 - www.smultidownloader.com
+        #                 - smultidownloader.com
+
+        #             Origins:
+        #                 - DomainName: !GetAtt WebsiteBucket.DomainName
+        #                   Id: StaticOrigin
+        #                   S3OriginConfig:
+        #                       OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${WebsiteOriginAccessIdentity}'
+
+        #                 - DomainName: !Sub '${HttpApi}.execute-api.${self:provider.region}.amazonaws.com'
+        #                   Id: WebsiteOrigin
+        #                   CustomOriginConfig:
+        #                       OriginProtocolPolicy: https-only
+        #                       OriginSSLProtocols: [TLSv1.2]
+
+        #             DefaultCacheBehavior:
+        #                 AllowedMethods:
+        #                     [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+        #                 CachedMethods: [GET, HEAD, OPTIONS]
+        #                 Compress: true
+        #                 CachePolicyId: !Ref CachePolicy
+        #                 TargetOriginId: WebsiteOrigin
+        #                 ViewerProtocolPolicy: redirect-to-https
+
+        #             CacheBehaviors:
+        #                 - PathPattern: 'assets/*'
+        #                   AllowedMethods:
+        #                       - GET
+        #                       - HEAD
+        #                   CachedMethods:
+        #                       - GET
+        #                       - HEAD
+        #                   Compress: true
+        #                   ForwardedValues:
+        #                       QueryString: true
+        #                       Cookies:
+        #                           Forward: none
+        #                   TargetOriginId: StaticOrigin
+        #                   ViewerProtocolPolicy: redirect-to-https
+
+        #                 - PathPattern: '/favicon.*'
+        #                   AllowedMethods:
+        #                       - GET
+        #                       - HEAD
+        #                   CachedMethods:
+        #                       - GET
+        #                       - HEAD
+        #                   Compress: false
+        #                   ForwardedValues:
+        #                       QueryString: false
+        #                       Cookies:
+        #                           Forward: none
+        #                   TargetOriginId: StaticOrigin
+        #                   ViewerProtocolPolicy: redirect-to-https
+
+        #             Comment: ${self:service}-${self:provider.stage}
+        #             Enabled: true
+        #             HttpVersion: http2
+        #             PriceClass: PriceClass_100
+
+        #             ViewerCertificate:
+        #                 AcmCertificateArn: arn:aws:acm:us-east-1:412381757672:certificate/45c6aeed-50ae-4a67-9c0f-3bc6825e1fd0
+        #                 SslSupportMethod: sni-only
+        #                 MinimumProtocolVersion: TLSv1.2_2021
+
+        # CachePolicy:
+        #     Type: AWS::CloudFront::CachePolicy
+        #     Properties:
+        #         CachePolicyConfig:
+        #             Name: CachePolicy
+        #             DefaultTTL: 60
+        #             MinTTL: 0
+        #             MaxTTL: 60
+        #             ParametersInCacheKeyAndForwardedToOrigin:
+        #                 HeadersConfig:
+        #                     HeaderBehavior: whitelist
+        #                     Headers:
+        #                         - Accept-Language
+        #                 EnableAcceptEncodingGzip: true
+        #                 QueryStringsConfig:
+        #                     QueryStringBehavior: all
+        #                 CookiesConfig:
+        #                     CookieBehavior: all
+
+        # WebsiteOriginAccessIdentity:
+        #     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+        #     Properties:
+        #         CloudFrontOriginAccessIdentityConfig:
+        #             Comment: Origin Access Identity to Access ${self:service} Website Bucket ${self:provider.stage}
+
+        # WebsiteBucket:
+        #     Type: AWS::S3::Bucket
+        #     Properties:
+        #         BucketName: ${env:S3_STATIC_BUCKET}
+
+        # WebsiteBucketPolicy:
+        #     Type: AWS::S3::BucketPolicy
+        #     Properties:
+        #         Bucket: !Ref WebsiteBucket
+        #         PolicyDocument:
+        #             Statement:
+        #                 - Effect: Allow
+        #                   Action:
+        #                       - s3:GetObject
+        #                   Resource: !Sub '${WebsiteBucket.Arn}/*'
+        #                   Principal:
+        #                       CanonicalUser: !GetAtt WebsiteOriginAccessIdentity.S3CanonicalUserId
+
+        PublicStaticBucket:
+            Type: AWS::S3::Bucket
+            Properties:
+                BucketName: ${env:S3_FILES_BUCKET}
+                PublicAccessBlockConfiguration:
+                    BlockPublicAcls: false
+                    BlockPublicPolicy: false
+                    IgnorePublicAcls: false
+                    RestrictPublicBuckets: false
+
+        PublicStaticBucketPolicy:
+            Type: AWS::S3::BucketPolicy
+            Properties:
+                Bucket: !Ref PublicStaticBucket
+                PolicyDocument:
+                    Statement:
+                        - Sid: PublicReadGetObject
+                          Effect: Allow
+                          Principal: '*'
+                          Action:
+                              - s3:GetObject
+                          Resource: !Sub '${PublicStaticBucket.Arn}/*'
+                        - Sid: PublicListBucket
+                          Effect: Allow
+                          Principal: '*'
+                          Action:
+                              - s3:ListBucket
+                          Resource: !GetAtt PublicStaticBucket.Arn

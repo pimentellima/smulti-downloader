@@ -9,7 +9,7 @@ export function useJobs(requestId: string | null) {
     return useQuery<Job[]>({
         queryKey: ['jobs', requestId],
         queryFn: async () => {
-            const response = await fetch(`/api/jobs?requestId=${requestId}`)
+            const response = await fetch(`/api/jobs/${requestId}`)
             if (!response.ok) {
                 throw new Error('Failed to fetch jobs')
             }
@@ -91,6 +91,32 @@ export function useCancelJob() {
         onSuccess: async () => {
             await queryClient.refetchQueries({
                 queryKey: ['jobs'],
+            })
+        },
+    })
+}
+
+export function useStartConversion() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            formatId,
+            jobId,
+        }: {
+            jobId: string
+            formatId: string
+        }) => {
+            const response = await fetch(`/api/jobs/${jobId}/${formatId}`, {
+                method: 'POST',
+            })
+            if (!response.ok) {
+                throw new Error('Failed to start conversion')
+            }
+        },
+        onSuccess: async () => {
+            await queryClient.refetchQueries({
+                queryKey: ['job-poll'],
             })
         },
     })

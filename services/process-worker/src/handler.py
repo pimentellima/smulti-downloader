@@ -31,7 +31,6 @@ def extract_job_info(video_url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=False)
 
-    print("formats::", info.get("formats", []))
     formats = []
 
     for f in info.get("formats", []):
@@ -73,13 +72,18 @@ def lambda_handler(event, context=None):
                 if not job:
                     print(f"Job ID {job_id} não encontrado no banco de dados")
                     return
+                cur.execute(
+                    "UPDATE jobs SET status = %s WHERE id = %s",
+                    ('processing', job_id)
+                )
+                conn.commit()
                         
                 video_url = job["url"]
                 job_data = extract_job_info(video_url)
                 
                 cur.execute(
                     "UPDATE jobs SET title = %s, status = %s WHERE id = %s",
-                    (job_data["title"], 'ready', job_id)
+                    (job_data["title"], 'finished-processing', job_id)
                 )
                 
                 for format_data in job_data["formats"]:
@@ -101,11 +105,7 @@ def lambda_handler(event, context=None):
                         format_data["language"],
                         format_data["format_note"]
                     ))
-                    
-                cur.execute(
-                    "UPDATE jobs SET status = %s WHERE id = %s",
-                    ('finished-processing', job_id)
-                )
+            
             conn.commit()
             print(f"Job {job_id} processado com sucesso. Título: {job_data['title']}")
             
@@ -117,7 +117,7 @@ def lambda_handler(event, context=None):
                     
                     cur.execute(
                         "UPDATE jobs SET status = %s WHERE id = %s",
-                        ('error', job_id)
+                        ('error-processing', job_id)
                     )
                     
                     conn.commit()

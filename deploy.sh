@@ -3,17 +3,8 @@
 set -e 
 
 export $(grep -v '^#' .env | xargs)
-BUILD_DIR=build/client 
 
-echo "Installing dependencies..."
 npm ci
-
-echo "Building..."
 npm run build
-npm run build:process-worker
-
-echo "Deploying..."
-npx serverless deploy --verbose
-aws s3 sync $BUILD_DIR s3://$S3_STATIC_BUCKET --delete
-
-echo "Deployment complete!"
+sls deploy --verbose
+aws s3 sync ./services/web/build/client s3://$S3_STATIC_BUCKET --delete

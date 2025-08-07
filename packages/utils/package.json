@@ -19,8 +19,8 @@
         "dist"
     ],
     "dependencies": {
-        "@smulti-downloader/drizzle": "workspace:^",
-        "@smulti-downloader/shared": "workspace:^",
+        "@smulti-downloader/drizzle": "*",
+        "@smulti-downloader/shared": "*",
         "zod": "^3.24.4",
         "zod-error": "^1.5.0",
         "@aws-sdk/client-s3": "^3.817.0",
@@ -37,7 +37,7 @@
         "postgres": "^3.4.5"
     },
     "devDependencies": {
-        "@smulti-downloader/tsconfig": "workspace:^",
+        "@smulti-downloader/tsconfig": "*",
         "tsconfig-paths": "^4.2.0",
         "tsx": "^4.19.2",
         "dotenv-cli": "^8.0.0",

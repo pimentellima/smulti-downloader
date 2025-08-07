@@ -8,7 +8,7 @@ interface DownloadButtonProps {
     size?: ComponentProps<typeof Button>['size']
     variant?: ComponentProps<typeof Button>['variant']
     description?: string
-    downloadLink: string
+    downloadLink?: string
 }
 
 const dictionary = {

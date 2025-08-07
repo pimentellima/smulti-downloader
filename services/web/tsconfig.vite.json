@@ -2,6 +2,7 @@
     "extends": "@smulti-downloader/tsconfig/react-library.json",
     "include": [".react-router/types/**/*", "app/**/*", "server.ts"],
     "compilerOptions": {
+        "moduleResolution": "bundler",
         "rootDirs": [".", "./.react-router/types"],
         "types": ["vite/client"]
     },

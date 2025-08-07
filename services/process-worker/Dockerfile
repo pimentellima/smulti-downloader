@@ -2,10 +2,11 @@ FROM public.ecr.aws/lambda/python:3.11
 
 RUN yum install -y postgresql-devel gcc python3-devel
 
-COPY src/handler.py ${LAMBDA_TASK_ROOT}/handlers/handler.py
+WORKDIR ${LAMBDA_TASK_ROOT}
+COPY src/handler.py handler.py
 COPY requirements.txt .
 COPY cookies.txt .
 
 RUN pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
-CMD ["handlers/handler.lambda_handler"]
+CMD ["handler.lambda_handler"]

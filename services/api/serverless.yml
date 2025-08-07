@@ -1,7 +1,4 @@
-service: smulti-web-app
-
-package:
-    individually: true
+service: smulti-api
 
 provider:
     name: aws
@@ -9,42 +6,16 @@ provider:
     region: us-east-1
     memorySize: 512
     stage: dev
-    ecr:
-        images:
-            process-handler-image:
-                path: ./handlers/process-handler
-                file: Dockerfile
-            convert-handler-image:
-                path: ./handlers/convert-handler
-                file: Dockerfile
     environment:
+        SQS_CONVERT_QUEUE_NAME: ${env:SQS_CONVERT_QUEUE_NAME}
+        SQS_PROCESS_QUEUE_NAME: ${env:SQS_PROCESS_QUEUE_NAME}
         DATABASE_URL: ${env:DATABASE_URL}
         S3_FILES_BUCKET: ${env:S3_FILES_BUCKET}
-
         NODE_OPTIONS: '--enable-source-maps'
 
 functions:
-    convert:
-        image:
-            name: convert-handler-image
-        events:
-            - sqs:
-                  arn: !GetAtt ConvertQueue.Arn
-    process:
-        image:
-            name: process-handler-image
-        events:
-            - sqs:
-                  arn: !GetAtt ProcessQueue.Arn
-    
-    ssr:
-        handler: build/server/index.handler
-        events:
-            - httpApi:
-                  path: /{proxy+}
-                  method: '*'
     api:
-        handler: handlers/api-handler.handler
+        handler: src/handler.handler
         events:
             - httpApi:
                   path: /api/{proxy+}
@@ -52,9 +23,6 @@ functions:
             - httpApi:
                   path: /api
                   method: '*'
-        environment:
-            SQS_CONVERT_QUEUE_NAME: ${env:SQS_CONVERT_QUEUE_NAME}
-            SQS_PROCESS_QUEUE_NAME: ${env:SQS_PROCESS_QUEUE_NAME}
 plugins:
     - serverless-esbuild
 
@@ -79,14 +47,6 @@ outputs:
 
 resources:
     Resources:
-        ConvertQueue:
-            Type: AWS::SQS::Queue
-            Properties:
-                QueueName: ${env:SQS_CONVERT_QUEUE_NAME}
-        ProcessQueue:
-            Type: AWS::SQS::Queue
-            Properties:
-                QueueName: ${env:SQS_PROCESS_QUEUE_NAME}
         CDN:
             Type: AWS::CloudFront::Distribution
             DependsOn:
@@ -203,31 +163,3 @@ resources:
                           Principal:
                               CanonicalUser: !GetAtt WebsiteOriginAccessIdentity.S3CanonicalUserId
 
-        PublicStaticBucket:
-            Type: AWS::S3::Bucket
-            Properties:
-                BucketName: ${env:S3_FILES_BUCKET}
-                PublicAccessBlockConfiguration:
-                    BlockPublicAcls: false
-                    BlockPublicPolicy: false
-                    IgnorePublicAcls: false
-                    RestrictPublicBuckets: false
-
-        PublicStaticBucketPolicy:
-            Type: AWS::S3::BucketPolicy
-            Properties:
-                Bucket: !Ref PublicStaticBucket
-                PolicyDocument:
-                    Statement:
-                        - Sid: PublicReadGetObject
-                          Effect: Allow
-                          Principal: '*'
-                          Action:
-                              - s3:GetObject
-                          Resource: !Sub '${PublicStaticBucket.Arn}/*'
-                        - Sid: PublicListBucket
-                          Effect: Allow
-                          Principal: '*'
-                          Action:
-                              - s3:ListBucket
-                          Resource: !GetAtt PublicStaticBucket.Arn

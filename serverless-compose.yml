@@ -1,0 +1,11 @@
+services:
+    # infra:
+    #     path: ./packages/infra
+    # api:
+    #     path: ./services/api
+    # web:
+    #     path: ./services/web
+    convert-service:
+        path: ./services/convert-service
+    process-worker:
+        path: ./services/process-worker

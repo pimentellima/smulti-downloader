@@ -1,0 +1,29 @@
+service: smulti-process-worker
+
+provider:
+    name: aws
+    region: us-east-1
+    memorySize: 512
+    timeout: 60
+    stage: dev
+    ecr:
+        images:
+            process-handler-image:
+                path: ./
+                file: Dockerfile
+    environment:
+        DATABASE_URL: ${env:DATABASE_URL}
+
+functions:
+    process:
+        image:
+            name: process-handler-image
+        events:
+            - sqs:
+                  arn: !GetAtt ProcessQueue.Arn
+resources:
+    Resources:
+        ProcessQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: ${env:SQS_PROCESS_QUEUE_NAME}

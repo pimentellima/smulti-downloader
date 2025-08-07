@@ -8,10 +8,8 @@
         "check-types": "turbo check-types"
     },
     "devDependencies": {
-        "@smulti-downloader/api": "workspace:^",
+        "@smulti-downloader/convert-service": "*",
         "prettier": "^3.5.3",
-        "ts-node-dev": "^2.0.0",
-        "tsconfig-paths": "^4.2.0",
         "turbo": "^2.5.4",
         "typescript": "^5.8.3"
     },
@@ -19,5 +17,8 @@
     "workspaces": [
         "services/*",
         "packages/*"
-    ]
+    ],
+    "dependencies": {
+        "esbuild": "^0.25.5"
+    }
 }
